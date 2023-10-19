@@ -575,6 +575,16 @@ CONTAINS
     ALLOCATE(bz(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
     bz = temp
 
+#ifdef APT_VACUUM
+    DEALLOCATE(ex_total, ey_total, ez_total, bx_total, by_total, bz_total)
+    ALLOCATE(ex_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+    ALLOCATE(ey_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+    ALLOCATE(ez_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+    ALLOCATE(bx_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+    ALLOCATE(by_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+    ALLOCATE(bz_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))        
+#endif    
+    
     IF (pre_loading) THEN
       IF (ALLOCATED(global_species_density)) DEALLOCATE(global_species_density)
       IF (ALLOCATED(global_species_temp)) DEALLOCATE(global_species_temp)

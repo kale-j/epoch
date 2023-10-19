@@ -850,6 +850,18 @@ CONTAINS
     ! These are the electric and magnetic fields interpolated to the
     ! particle position. They have been checked and are correct.
     ! Actually checking this is messy.
+#ifdef APT_VACUUM
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_total_part.inc"
+#include "bspline3/b_total_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_total_part.inc"
+#include "tophat/b_total_part.inc"
+#else
+#include "triangle/e_total_part.inc"
+#include "triangle/b_total_part.inc"
+#endif
+#else
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_part.inc"
 #include "bspline3/b_part.inc"
@@ -860,6 +872,7 @@ CONTAINS
 #include "triangle/e_part.inc"
 #include "triangle/b_part.inc"
 #endif
+#endif    
 
     ! update particle momenta using weighted fields
     ! ex_part etc are NOT fields at particle, but fac times

@@ -582,6 +582,50 @@ CONTAINS
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 
     SELECT CASE(direction)
+#ifdef APT_VACUUM
+    CASE(c_dir_x)
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ey_cc = 0.5_num  * (ey_total(ix  , iy-1, iz  ) + ey_total(ix, iy  , iz  ))
+        ez_cc = 0.5_num  * (ez_total(ix  , iy  , iz-1) + ez_total(ix, iy  , iz  ))
+        by_cc = 0.25_num * (by_total(ix-1, iy  , iz-1) + by_total(ix, iy  , iz-1) &
+                         +  by_total(ix-1, iy  , iz  ) + by_total(ix, iy  , iz  ))
+        bz_cc = 0.25_num * (bz_total(ix-1, iy-1, iz  ) + bz_total(ix, iy-1, iz  ) &
+                         +  bz_total(ix-1, iy  , iz  ) + bz_total(ix, iy  , iz  ))
+        data_array(ix,iy,iz) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
+      END DO
+      END DO
+      END DO
+    CASE(c_dir_y)
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex_total(ix-1, iy  , iz  ) + ex_total(ix, iy  , iz  ))
+        ez_cc = 0.5_num  * (ez_total(ix  , iy  , iz-1) + ez_total(ix, iy  , iz  ))
+        bx_cc = 0.25_num * (bx_total(ix  , iy-1, iz-1) + bx_total(ix, iy  , iz-1) &
+                         +  bx_total(ix  , iy-1, iz  ) + bx_total(ix, iy  , iz  ))
+        bz_cc = 0.25_num * (bz_total(ix-1, iy-1, iz  ) + bz_total(ix, iy-1, iz  ) &
+                         +  bz_total(ix-1, iy  , iz  ) + bz_total(ix, iy  , iz  ))
+        data_array(ix,iy,iz) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
+      END DO
+      END DO
+      END DO
+    CASE(c_dir_z)
+      DO iz = 1, nz
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex_total(ix-1, iy  , iz  ) + ex_total(ix, iy, iz  ))
+        ey_cc = 0.5_num  * (ey_total(ix  , iy-1, iz  ) + ey_total(ix, iy, iz  ))
+        bx_cc = 0.25_num * (bx_total(ix  , iy-1, iz-1) + bx_total(ix, iy, iz-1) &
+                         +  bx_total(ix  , iy-1, iz  ) + bx_total(ix, iy, iz  ))
+        by_cc = 0.25_num * (by_total(ix-1, iy  , iz-1) + by_total(ix, iy, iz-1) &
+                         +  by_total(ix-1, iy  , iz  ) + by_total(ix, iy, iz  ))
+        data_array(ix,iy,iz) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
+      END DO
+      END DO
+      END DO
+#else
     CASE(c_dir_x)
       DO iz = 1, nz
       DO iy = 1, ny
@@ -624,6 +668,7 @@ CONTAINS
       END DO
       END DO
       END DO
+#endif      
     END SELECT
 
   END SUBROUTINE calc_poynt_flux
@@ -1454,8 +1499,13 @@ CONTAINS
     DO k = 1, nz
     DO j = 1, ny
     DO i = 1, nx
-      field_energy = field_energy + ex(i,j,k)**2 + ey(i,j,k)**2 &
+#ifdef APT_VACUUM
+       field_energy = field_energy + ex_total(i,j,k)**2 + ey_total(i,j,k)**2 &
+          + ez_total(i,j,k)**2 + c2 * (bx_total(i,j,k)**2 + by_total(i,j,k)**2 + bz_total(i,j,k)**2)
+#else
+       field_energy = field_energy + ex(i,j,k)**2 + ey(i,j,k)**2 &
           + ez(i,j,k)**2 + c2 * (bx(i,j,k)**2 + by(i,j,k)**2 + bz(i,j,k)**2)
+#endif       
     END DO
     END DO
     END DO

@@ -297,6 +297,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_use_mpi3 = 2**25
   INTEGER(i8), PARAMETER :: c_def_bremsstrahlung = 2**26
   INTEGER(i8), PARAMETER :: c_def_probe_time = 2**27
+  INTEGER(i8), PARAMETER :: c_def_apt_vacuum = 2**28
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -636,7 +637,13 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 71
   INTEGER, PARAMETER :: c_dump_probe_time        = 72
   INTEGER, PARAMETER :: c_dump_cou_log           = 73
-  INTEGER, PARAMETER :: num_vars_to_dump         = 73
+  INTEGER, PARAMETER :: c_dump_ex_total          = 74
+  INTEGER, PARAMETER :: c_dump_ey_total          = 75
+  INTEGER, PARAMETER :: c_dump_ez_total          = 76
+  INTEGER, PARAMETER :: c_dump_bx_total          = 77
+  INTEGER, PARAMETER :: c_dump_by_total          = 78
+  INTEGER, PARAMETER :: c_dump_bz_total          = 79  
+  INTEGER, PARAMETER :: num_vars_to_dump         = 79
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2

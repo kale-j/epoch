@@ -467,6 +467,15 @@ CONTAINS
         ! This can be done with electric field smoothing but hasn't been
         ! necessary since the statistics were changed away from using number
         ! densities.
+#ifdef APT_VACUUM
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_total_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_total_part.inc"
+#else
+#include "triangle/e_total_part.inc"
+#endif
+#else
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_part.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
@@ -474,7 +483,8 @@ CONTAINS
 #else
 #include "triangle/e_part.inc"
 #endif
-
+#endif
+        
         ! Electric field strength in atomic units
         e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
             / atomic_electric_field
@@ -770,6 +780,15 @@ CONTAINS
         ! This can be done with electric field smoothing but hasn't been
         ! necessary since the statistics were changed away from using number
         ! densities.
+#ifdef APT_VACUUM
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_total_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_total_part.inc"
+#else
+#include "triangle/e_total_part.inc"
+#endif
+#else
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_part.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
@@ -777,7 +796,8 @@ CONTAINS
 #else
 #include "triangle/e_part.inc"
 #endif
-
+#endif
+        
         ! Electric field strength in atomic units
         e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
             / atomic_electric_field
@@ -1059,6 +1079,15 @@ CONTAINS
         ! This can be done with electric field smoothing but hasn't been
         ! necessary since the statistics were changed away from using number
         ! densities.
+#ifdef APT_VACUUM
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_total_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_total_part.inc"
+#else
+#include "triangle/e_total_part.inc"
+#endif
+#else
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_part.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
@@ -1066,6 +1095,7 @@ CONTAINS
 #else
 #include "triangle/e_part.inc"
 #endif
+#endif        
 
         ! Electric field strength in atomic units
         e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &
@@ -1338,6 +1368,15 @@ CONTAINS
         ! This can be done with electric field smoothing but hasn't been
         ! necessary since the statistics were changed away from using number
         ! densities.
+#ifdef APT_VACUUM
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_total_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_total_part.inc"
+#else
+#include "triangle/e_total_part.inc"
+#endif
+#else
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_part.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
@@ -1345,6 +1384,7 @@ CONTAINS
 #else
 #include "triangle/e_part.inc"
 #endif
+#endif        
 
         ! Electric field strength in atomic units
         e_part_mag = fac * SQRT(ex_part**2 + ey_part**2 + ez_part**2) &

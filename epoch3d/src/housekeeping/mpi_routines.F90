@@ -541,6 +541,14 @@ CONTAINS
     ALLOCATE(bx(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
     ALLOCATE(by(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
     ALLOCATE(bz(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+#ifdef APT_VACUUM
+    ALLOCATE(ex_total(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(ey_total(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(ez_total(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(bx_total(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(by_total(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(bz_total(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))    
+#endif    
     ! Current may need an extra layer of ghostcells.
     ALLOCATE(jx(1-jng:nx+jng, 1-jng:ny+jng, 1-jng:nz+jng))
     ALLOCATE(jy(1-jng:nx+jng, 1-jng:ny+jng, 1-jng:nz+jng))

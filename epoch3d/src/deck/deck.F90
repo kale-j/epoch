@@ -42,6 +42,7 @@ MODULE deck
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
+  USE deck_analytic_pulse_block
   ! Extended IO Blocks
   USE deck_dist_fn_block
 #ifndef NO_PARTICLE_PROBES
@@ -106,6 +107,7 @@ CONTAINS
     CALL species_deck_initialise
     CALL window_deck_initialise
     CALL part_from_file_deck_initialise
+    CALL analytic_pulse_deck_initialise    
 
   END SUBROUTINE deck_initialise
 
@@ -137,6 +139,7 @@ CONTAINS
     CALL part_from_file_deck_finalise ! Must be called after
                                       ! species_deck_finalise
     CALL window_deck_finalise
+    CALL analytic_pulse_deck_finalise
 
   END SUBROUTINE deck_finalise
 
@@ -186,6 +189,8 @@ CONTAINS
       CALL window_block_start
     ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
       CALL part_from_file_block_start
+    ELSE IF (str_cmp(block_name, 'analytic_pulse')) THEN
+      CALL analytic_pulse_block_start
     END IF
 
   END SUBROUTINE start_block
@@ -237,6 +242,8 @@ CONTAINS
       CALL window_block_end
     ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
       CALL part_from_file_block_end
+    ELSE IF (str_cmp(block_name, 'analytic_pulse')) THEN
+      CALL analytic_pulse_block_end
     END IF
 
   END SUBROUTINE end_block
@@ -328,6 +335,9 @@ CONTAINS
       handle_block = &
           part_from_file_block_handle_element(block_element, block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'analytic_pulse')) THEN
+      handle_block = analytic_pulse_block_handle_element(block_element, block_value)
+      RETURN
     END IF
 
     handle_block = c_err_unknown_block
@@ -382,6 +392,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, species_block_check())
     errcode_deck = IOR(errcode_deck, window_block_check())
     errcode_deck = IOR(errcode_deck, part_from_file_block_check())
+    errcode_deck = IOR(errcode_deck, analytic_pulse_block_check())
 
     errcode_deck = IOR(errcode_deck, custom_blocks_check())
 

@@ -159,6 +159,9 @@ CONTAINS
 #ifdef NO_MPI3
     found = .TRUE.
 #endif
+#ifdef APT_VACUUM
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -275,6 +278,10 @@ CONTAINS
 #else
     defines = IOR(defines, c_def_use_mpi3)
 #endif
+#ifdef APT_VACUUM
+    defines = IOR(defines, c_def_apt_vacuum)
+    WRITE(*,*) 'Vacuum implementation of analytic pulse technique -DAPT_VACUUM'
+#endif    
     WRITE(*,*) '*************************************************************'
 
   END SUBROUTINE compiler_directives

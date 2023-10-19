@@ -27,6 +27,9 @@ MODULE finish
   USE ionise
   USE injectors
   USE probes
+#ifdef APT_VACUUM
+  USE analytic_pulse
+#endif  
 
   IMPLICIT NONE
 
@@ -56,6 +59,9 @@ CONTAINS
     DEALLOCATE(y, yb, y_global, yb_global, yb_offset_global)
     DEALLOCATE(z, zb, z_global, zb_global, zb_offset_global)
     DEALLOCATE(ex, ey, ez, bx, by, bz, jx, jy, jz)
+#ifdef APT_VACUUM
+    DEALLOCATE(ex_total, ey_total, ez_total, bx_total, by_total, bz_total)
+#endif
 
     DEALLOCATE(npart_each_rank)
     DEALLOCATE(x_grid_mins, x_grid_maxs, cell_x_min, cell_x_max)
@@ -144,6 +150,9 @@ CONTAINS
     CALL deallocate_partlists
     CALL deallocate_eval_stack
     CALL deallocate_injectors
+#ifdef APT_VACUUM
+    CALL deallocate_analytic_pulses
+#endif
 
     CALL MPI_COMM_FREE(comm, errcode)
 
