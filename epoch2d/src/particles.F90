@@ -20,6 +20,9 @@ MODULE particles
 #ifdef PREFETCH
   USE prefetch
 #endif
+#ifdef APT_VACUUM
+  USE analytic_pulse
+#endif
 
   IMPLICIT NONE
 
@@ -140,6 +143,10 @@ CONTAINS
 
     TYPE(particle), POINTER :: current, next
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
+
+#ifdef APT_VACUUM
+    CALL analytic_pulse_total_fields
+#endif
 
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
@@ -367,6 +374,18 @@ CONTAINS
         ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
+#ifdef APT_VACUUM
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/e_total_part.inc"
+#include "bspline3/b_total_part.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/e_total_part.inc"
+#include "tophat/b_total_part.inc"
+#else
+#include "triangle/e_total_part.inc"
+#include "triangle/b_total_part.inc"
+#endif
+#else
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_part.inc"
 #include "bspline3/b_part.inc"
@@ -376,6 +395,7 @@ CONTAINS
 #else
 #include "triangle/e_part.inc"
 #include "triangle/b_part.inc"
+#endif
 #endif
 
         ! update particle momenta using weighted fields

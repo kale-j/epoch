@@ -552,6 +552,32 @@ CONTAINS
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 
     SELECT CASE(direction)
+#ifdef APT_VACUUM
+    CASE(c_dir_x)
+      DO ix = 1, nx
+        ey_cc = ey_total(ix)
+        ez_cc = ez_total(ix)
+        by_cc = 0.5_num * (by_total(ix-1) + by_total(ix))
+        bz_cc = 0.5_num * (bz_total(ix-1) + bz_total(ix))
+        data_array(ix) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
+      END DO
+    CASE(c_dir_y)
+      DO ix = 1, nx
+        ex_cc = 0.5_num * (ex_total(ix-1) + ex_total(ix))
+        ez_cc = ez_total(ix)
+        bx_cc = bx_total(ix)
+        bz_cc = 0.5_num * (bz_total(ix-1) + bz_total(ix))
+        data_array(ix) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
+      END DO
+    CASE(c_dir_z)
+      DO ix = 1, nx
+        ex_cc = 0.5_num * (ex_total(ix-1) + ex_total(ix))
+        ey_cc = ey_total(ix)
+        bx_cc = bx_total(ix)
+        by_cc = 0.5_num * (by_total(ix-1) + by_total(ix))
+        data_array(ix) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
+      END DO
+#else       
     CASE(c_dir_x)
       DO ix = 1, nx
         ey_cc = ey(ix)
@@ -576,6 +602,7 @@ CONTAINS
         by_cc = 0.5_num * (by(ix-1) + by(ix))
         data_array(ix) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
       END DO
+#endif
     END SELECT
 
   END SUBROUTINE calc_poynt_flux
@@ -1313,8 +1340,13 @@ CONTAINS
     ! EM field energy
     field_energy = 0.0_num
     DO i = 1, nx
-      field_energy = field_energy + ex(i)**2 + ey(i)**2 &
+#ifdef APT_VACUUM
+       field_energy = field_energy + ex_total(i)**2 + ey_total(i)**2 &
+          + ez_total(i)**2 + c2 * (bx_total(i)**2 + by_total(i)**2 + bz_total(i)**2)
+#else       
+       field_energy = field_energy + ex(i)**2 + ey(i)**2 &
           + ez(i)**2 + c2 * (bx(i)**2 + by(i)**2 + bz(i)**2)
+#endif
     END DO
     field_energy = 0.5_num * epsilon0 * field_energy * dx
 

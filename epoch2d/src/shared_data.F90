@@ -803,6 +803,32 @@ MODULE shared_data
   INTEGER, DIMENSION(2*c_ndims) :: n_lasers
   LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
+#ifdef APT_VACUUM
+  !----------------------------------------------------------------------------
+  ! analytic pulse technique, vacuum implementation
+  !----------------------------------------------------------------------------
+  TYPE analytic_pulse_block
+    ! phase velocity direction (x_min -> +x)
+    INTEGER :: boundary
+    ! additional mandatory parameters
+    REAL(num) :: omega, a0, w0, tau
+    ! optional parameters
+    REAL(num) :: bf, xf, yf, zf, t0, ph0
+    INTEGER :: sg
+    ! calculated quantities
+    REAL(num) :: e0, b0, e1, b1, rayl, vph, vg
+    TYPE(analytic_pulse_block), POINTER :: next
+  END TYPE analytic_pulse_block
+
+  TYPE(analytic_pulse_block), POINTER :: analytic_pulses
+  INTEGER, DIMENSION(2*c_ndims) :: n_analytic_pulses
+  LOGICAL :: use_analytic_pulses = .FALSE.
+
+  ! total field
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex_total, ey_total, ez_total
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: bx_total, by_total, bz_total
+#endif
+
   TYPE(jobid_type) :: jobid
 
   INTEGER(i4) :: run_date

@@ -639,6 +639,26 @@ CONTAINS
     ELSE IF (str_cmp(element, 'jz')) THEN
       elementselected = c_dump_jz
 
+#ifdef APT_VACUUM
+    ELSE IF (str_cmp(element, 'ex_total')) THEN
+      elementselected = c_dump_ex_total
+
+    ELSE IF (str_cmp(element, 'ey_total')) THEN
+      elementselected = c_dump_ey_total
+
+    ELSE IF (str_cmp(element, 'ez_total')) THEN
+      elementselected = c_dump_ez_total
+
+    ELSE IF (str_cmp(element, 'bx_total')) THEN
+      elementselected = c_dump_bx_total
+
+    ELSE IF (str_cmp(element, 'by_total')) THEN
+      elementselected = c_dump_by_total
+
+    ELSE IF (str_cmp(element, 'bz_total')) THEN
+      elementselected = c_dump_bz_total
+#endif
+
     ELSE IF (str_cmp(element, 'ekbar') &
         .OR. str_cmp(element, 'average_particle_energy')) THEN
       elementselected = c_dump_ekbar
@@ -891,6 +911,14 @@ CONTAINS
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
         IF (mask_element == c_dump_poynt_flux) bad = .FALSE.
+#ifdef APT_VACUUM
+        IF (mask_element == c_dump_ex_total) bad = .FALSE.
+        IF (mask_element == c_dump_ey_total) bad = .FALSE.
+        IF (mask_element == c_dump_ez_total) bad = .FALSE.
+        IF (mask_element == c_dump_bx_total) bad = .FALSE.
+        IF (mask_element == c_dump_by_total) bad = .FALSE.
+        IF (mask_element == c_dump_bz_total) bad = .FALSE.
+#endif
 
         ! Unset 'no_sum' dumpmask for grid variables
         IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))

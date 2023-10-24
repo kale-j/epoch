@@ -567,6 +567,40 @@ CONTAINS
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 
     SELECT CASE(direction)
+#ifdef APT_VACUUM
+    CASE(c_dir_x)
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ey_cc = 0.5_num  * (ey_total(ix  , iy-1) + ey_total(ix, iy  ))
+        ez_cc = ez_total(ix, iy)
+        by_cc = 0.5_num  * (by_total(ix-1, iy  ) + by_total(ix, iy  ))
+        bz_cc = 0.25_num * (bz_total(ix-1, iy-1) + bz_total(ix, iy-1) &
+                         +  bz_total(ix-1, iy  ) + bz_total(ix, iy  ))
+        data_array(ix,iy) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
+      END DO
+      END DO
+    CASE(c_dir_y)
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex_total(ix-1, iy  ) + ex_total(ix, iy  ))
+        ez_cc = ez_total(ix, iy)
+        bx_cc = 0.5_num  * (bx_total(ix  , iy-1) + bx_total(ix, iy  ))
+        bz_cc = 0.25_num * (bz_total(ix-1, iy-1) + bz_total(ix, iy-1) &
+                         +  bz_total(ix-1, iy  ) + bz_total(ix, iy  ))
+        data_array(ix,iy) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
+      END DO
+      END DO
+    CASE(c_dir_z)
+      DO iy = 1, ny
+      DO ix = 1, nx
+        ex_cc = 0.5_num  * (ex_total(ix-1, iy  ) + ex_total(ix, iy))
+        ey_cc = 0.5_num  * (ey_total(ix  , iy-1) + ey_total(ix, iy))
+        bx_cc = 0.5_num  * (bx_total(ix  , iy-1) + bx_total(ix, iy))
+        by_cc = 0.5_num  * (by_total(ix-1, iy  ) + by_total(ix, iy))
+        data_array(ix,iy) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
+      END DO
+      END DO
+#else       
     CASE(c_dir_x)
       DO iy = 1, ny
       DO ix = 1, nx
@@ -599,6 +633,7 @@ CONTAINS
         data_array(ix,iy) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
       END DO
       END DO
+#endif
     END SELECT
 
   END SUBROUTINE calc_poynt_flux
@@ -1390,8 +1425,13 @@ CONTAINS
     field_energy = 0.0_num
     DO j = 1, ny
     DO i = 1, nx
-      field_energy = field_energy + ex(i,j)**2 + ey(i,j)**2 &
+#ifdef APT_VACUUM
+       field_energy = field_energy + ex_total(i,j)**2 + ey_total(i,j)**2 &
+          + ez_total(i,j)**2 + c2 * (bx_total(i,j)**2 + by_total(i,j)**2 + bz_total(i,j)**2)
+#else
+       field_energy = field_energy + ex(i,j)**2 + ey(i,j)**2 &
           + ez(i,j)**2 + c2 * (bx(i,j)**2 + by(i,j)**2 + bz(i,j)**2)
+#endif
     END DO
     END DO
     field_energy = 0.5_num * epsilon0 * field_energy * dx * dy

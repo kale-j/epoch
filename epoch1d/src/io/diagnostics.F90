@@ -30,6 +30,9 @@ MODULE diagnostics
   USE window
   USE timer
   USE particle_id_hash_mod
+#ifdef APT_VACUUM
+  USE analytic_pulse
+#endif
 
   IMPLICIT NONE
 
@@ -306,6 +309,10 @@ CONTAINS
       CALL sdf_set_point_array_size(sdf_buffer_size)
       sdf_max_string_length = sdf_get_max_string_length()
       max_string_length = MIN(sdf_max_string_length, c_max_string_length)
+#ifdef APT_VACUUM
+      ! in case total fields are needed
+      CALL analytic_pulse_total_fields
+#endif
     END IF
 
     dims = (/nx_global/)
@@ -499,6 +506,22 @@ CONTAINS
             'CPML/Bz_x', 'A/m^2', c_stagger_cell_centre, cpml_psi_bzx)
       END IF
 
+#ifdef APT_VACUUM
+      CALL write_field(c_dump_ex_total, code, 'ex_total', 'Electric Field/Ex_total', 'V/m', &
+          c_stagger_ex, ex_total)
+      CALL write_field(c_dump_ey_total, code, 'ey_total', 'Electric Field/Ey_total', 'V/m', &
+          c_stagger_ey, ey_total)
+      CALL write_field(c_dump_ez_total, code, 'ez_total', 'Electric Field/Ez_total', 'V/m', &
+          c_stagger_ez, ez_total)
+
+      CALL write_field(c_dump_bx_total, code, 'bx_total', 'Magnetic Field/Bx_total', 'T', &
+          c_stagger_bx, bx_total)
+      CALL write_field(c_dump_by_total, code, 'by_total', 'Magnetic Field/By_total', 'T', &
+          c_stagger_by, by_total)
+      CALL write_field(c_dump_bz_total, code, 'bz_total', 'Magnetic Field/Bz_total', 'T', &
+          c_stagger_bz, bz_total)
+#endif
+      
       IF (n_subsets > 0) THEN
         DO i = 1, n_species
           CALL create_empty_partlist(io_list_data(i)%attached_list)
@@ -1435,6 +1458,20 @@ CONTAINS
         avg%r4array(:,1) = avg%r4array(:,1) + REAL(jy(1-ng:nx+ng) * dt, r4)
       CASE(c_dump_jz)
         avg%r4array(:,1) = avg%r4array(:,1) + REAL(jz(1-ng:nx+ng) * dt, r4)
+#ifdef APT_VACUUM
+      CASE(c_dump_ex_total)
+        avg%r4array(:,1) = avg%r4array(:,1) + REAL(ex_total * dt, r4)
+      CASE(c_dump_ey_total)
+        avg%r4array(:,1) = avg%r4array(:,1) + REAL(ey_total * dt, r4)
+      CASE(c_dump_ez_total)
+        avg%r4array(:,1) = avg%r4array(:,1) + REAL(ez_total * dt, r4)
+      CASE(c_dump_bx_total)
+        avg%r4array(:,1) = avg%r4array(:,1) + REAL(bx_total * dt, r4)
+      CASE(c_dump_by_total)
+        avg%r4array(:,1) = avg%r4array(:,1) + REAL(by_total * dt, r4)
+      CASE(c_dump_bz_total)
+        avg%r4array(:,1) = avg%r4array(:,1) + REAL(bz_total * dt, r4)
+#endif
       CASE(c_dump_ekbar)
         ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
@@ -1588,6 +1625,20 @@ CONTAINS
         avg%array(:,1) = avg%array(:,1) + jy(1-ng:nx+ng) * dt
       CASE(c_dump_jz)
         avg%array(:,1) = avg%array(:,1) + jz(1-ng:nx+ng) * dt
+#ifdef APT_VACUUM
+      CASE(c_dump_ex_total)
+        avg%array(:,1) = avg%array(:,1) + ex_total * dt
+      CASE(c_dump_ey_total)
+        avg%array(:,1) = avg%array(:,1) + ey_total * dt
+      CASE(c_dump_ez_total)
+        avg%array(:,1) = avg%array(:,1) + ez_total * dt
+      CASE(c_dump_bx_total)
+        avg%array(:,1) = avg%array(:,1) + bx_total * dt
+      CASE(c_dump_by_total)
+        avg%array(:,1) = avg%array(:,1) + by_total * dt
+      CASE(c_dump_bz_total)
+        avg%array(:,1) = avg%array(:,1) + bz_total * dt
+#endif
       CASE(c_dump_ekbar)
         ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
