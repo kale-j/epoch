@@ -30,15 +30,19 @@ CONTAINS
     analytic_pulse%boundary = boundary
     analytic_pulse%omega = -1.0_num
     analytic_pulse%a0 = -1.0_num
-    analytic_pulse%w0 = -1.0_num
     analytic_pulse%tau = -1.0_num
-    analytic_pulse%bf = 0.0_num
-    analytic_pulse%xf = 0.0_num
-    analytic_pulse%yf = 0.0_num
-    analytic_pulse%zf = 0.0_num
     analytic_pulse%t0 = 0.0_num
     analytic_pulse%ph0 = 0.0_num
     analytic_pulse%sg = 1
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+    analytic_pulse%w0 = -1.0_num
+    analytic_pulse%bf = 0.0_num
+    analytic_pulse%xf = 0.0_num
+    analytic_pulse%yf = 0.0_num
+#ifdef APT_VACUUM_GAUSS
+    analytic_pulse%zf = 0.0_num
+#endif
+#endif
     NULLIFY(analytic_pulse%next)
 
   END SUBROUTINE init_analytic_pulse
@@ -102,20 +106,24 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       IF (current%boundary == c_bd_x_min) THEN
         rfac = 0.25*(current%omega*dx/c)**2
-        ! b0 set from a0
-        current%b0 = current%a0 * current%omega * m0/q0
-        ! e0 with numerical correction
-        current%e0 = current%b0 * c * (1 + 0.5*f**2*rfac)
-        ! e1, b1 from Lortentz transform
-        current%e1 = current%e0 * (1-current%bf)
-        current%b1 = current%b0 * (1-current%bf)
-        current%rayl = 0.5*(1-current%bf)*current%w0**2*current%omega/c
+        ! e0 set from a0
+        current%e0 = current%a0 * current%omega * m0 * c/q0
+        ! b0 with numerical correction
+        current%b0 = current%e0 * (1 + 0.5*f**2*rfac)/c
         ! numerical phase and group velocity
         current%vph = c*(1-(1-f**2)*rfac/6)
         current%vg = c*(1-0.5*(1-f**2)*rfac)
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+        ! e1, b1 from Lortentz transform
+        current%e1 = current%e0 * (1-current%bf)
+#ifdef APT_VACUUM_GAUSS
+        current%b1 = current%b0 * (1-current%bf)
+#endif
+        current%rayl = 0.5*(1-current%bf)*current%w0**2*current%omega/c
         ! xf adjusted so focus will be at input xf at time t0
         current%xf = (1-current%bf)*current%xf - c*current%bf*current%t0 &
              + 0.5*c*current%bf*dt + current%bf*x_min
+#endif
         ! t0 correction for evaluation time: t0 -> t0 - 0.5*dt
         ! adjusted so that intensity peak is at input xf at time t0
         current%t0 = current%t0 - 0.5*dt - x_min/current%vg
@@ -145,14 +153,20 @@ CONTAINS
 
     TYPE(analytic_pulse_block), POINTER :: current
     TYPE(parameter_pack) :: parameters
-    INTEGER :: n,i,j,k,err
+    INTEGER :: n,i,err
     ! copy for convenience
-    REAL(num) :: iw02, rayl, irayl, irayl2, tenv_norm
-    REAL(num) :: itau_ivg, xf, yf, zf, omega_ivph, pht
-    REAL(num) :: e0_amp, b0_amp, e1_amp, b1_amp
+    REAL(num) :: tenv_norm, itau_ivg, omega_ivph, pht
+    REAL(num) :: e0_amp, b0_amp
     INTEGER :: sg
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+    REAL(num) :: iw02, rayl, irayl, irayl2
+    REAL(num) :: xf, yf, e1_amp
     REAL(num) :: amp, phase
-
+    INTEGER :: j
+#ifdef APT_VACUUM_GAUSS
+    REAL(num) :: zf, b1_amp
+#endif
+#endif
     ex_total = 0
     ey_total = 0
     ez_total = 0
@@ -168,24 +182,29 @@ CONTAINS
       SELECT CASE(current%boundary)
 
         CASE(c_bd_x_min)
-          iw02 = 1.0_num/(current%w0*current%w0)
-          rayl = current%rayl
-          irayl = 1.0_num/current%rayl
-          irayl2 = 1.0_num/(current%rayl*current%rayl)
           tenv_norm = (time-current%t0)/current%tau
           itau_ivg = 1.0_num/(current%tau*current%vg)
           sg = 2*current%sg
-          xf = current%xf + c*current%bf*time
-          yf = current%yf
-          zf = current%zf
           omega_ivph = current%omega/current%vph
           pht = current%ph0 + current%omega*time
           e0_amp = current%e0
           b0_amp = current%b0
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)    
+          iw02 = 1.0_num/(current%w0*current%w0)
+          rayl = current%rayl
+          irayl = 1.0_num/current%rayl
+          irayl2 = 1.0_num/(current%rayl*current%rayl)
+          xf = current%xf + c*current%bf*time
+          yf = current%yf
           e1_amp = current%e1
+#ifdef APT_VACUUM_GAUSS
+          zf = current%zf
           b1_amp = current%b1
-
-          ! ex (two parts)
+#endif
+#endif
+          
+          ! ex (two parts) -- 3D or 2D gaussian only
+#if defined(APT_VACUUM_GAUSS)
           DO j = 1-ng,ny+ng
              DO i = 1-ng,nx+ng
                 amp = e1_amp * irayl * (yb(j)-yf) &
@@ -196,7 +215,20 @@ CONTAINS
                 ex_total(i,j) = ex_total(i,j) + amp*( irayl*(xf-x(i))*SIN(phase) + COS(phase) )
              END DO
           END DO
-          ! ey
+#elif defined(APT_VACUUM_GAUSS_2D)
+          DO j = 1-ng,ny+ng
+            DO i = 1-ng,nx+ng
+              amp = e1_amp * irayl * (yb(j)-yf) &
+                   * EXP( -iw02*(yb(j)-yf)*(yb(j)-yf)/(1+irayl2*(xf-x(i))**2) &
+                   -(tenv_norm-itau_ivg*x(i))**sg ) / (1+irayl2*(xf-x(i))**2)**1.25
+              phase = pht-omega_ivph*x(i) - 0.5*ATAN2(xf-x(i),rayl) &
+                   + iw02*irayl*(yb(j)-yf)*(yb(j)-yf)*(xf-x(i))/(1+irayl2*(xf-x(i))**2)
+              ex_total(i,j) = ex_total(i,j) + amp*( irayl*(xf-x(i))*SIN(phase) + COS(phase) )
+            END DO
+          END DO
+#endif
+          ! ey -- all cases
+#if defined(APT_VACUUM_GAUSS)
           DO j = 1-ng,ny+ng
              DO i = 1-ng,nx+ng
                 ey_total(i,j) = ey_total(i,j) + e0_amp * &
@@ -206,7 +238,24 @@ CONTAINS
                      + iw02*irayl*((y(j)-yf)*(y(j)-yf)+zf*zf)*(xf-xb(i))/(1+irayl2*(xf-xb(i))**2) )
              END DO
           END DO
-          ! bx (two parts)
+#elif defined(APT_VACUUM_GAUSS_2D)
+          DO j = 1-ng,ny+ng
+            DO i = 1-ng,nx+ng
+              ey_total(i,j) = ey_total(i,j) + e0_amp * &
+                   EXP( -iw02*(y(j)-yf)*(y(j)-yf)/(1+irayl2*(xf-xb(i))**2) &
+                   -(tenv_norm-itau_ivg*xb(i))**sg ) / SQRT(SQRT(1+irayl2*(xf-xb(i))**2)) &
+                   *SIN( pht-omega_ivph*xb(i) - 0.5*ATAN2(xf-xb(i),rayl) &
+                   + iw02*irayl*(y(j)-yf)*(y(j)-yf)*(xf-xb(i))/(1+irayl2*(xf-xb(i))**2) )
+            END DO
+          END DO
+#else
+          DO i = 1-ng,nx+ng
+            ey_total(i,:) = ey_total(i,:) + e0_amp * &
+                 EXP( -(tenv_norm-itau_ivg*xb(i))**sg )*SIN( pht-omega_ivph*xb(i) )
+          END DO          
+#endif
+          ! bx (two parts) -- 3D gaussian only
+#if defined(APT_VACUUM_GAUSS)
           DO j = 1-ng,ny+ng
              DO i = 1-ng,nx+ng
                 amp = -b1_amp * irayl * zf &
@@ -217,7 +266,9 @@ CONTAINS
                 bx_total(i,j) = bx_total(i,j) + amp*( irayl*(xf-xb(i))*SIN(phase) + COS(phase) )
              END DO
           END DO
-          ! bz
+#endif
+          ! bz -- all cases
+#if defined(APT_VACUUM_GAUSS)
           DO j = 1-ng,ny+ng
              DO i = 1-ng,nx+ng
                 bz_total(i,j) = bz_total(i,j) + b0_amp * &
@@ -227,6 +278,22 @@ CONTAINS
                      + iw02*irayl*((y(j)-yf)*(y(j)-yf)+zf*zf)*(xf-x(i))/(1+irayl2*(xf-x(i))**2) )
              END DO
           END DO
+#elif defined(APT_VACUUM_GAUSS_2D)
+          DO j = 1-ng,ny+ng
+            DO i = 1-ng,nx+ng
+              bz_total(i,j) = bz_total(i,j) + b0_amp * &
+                   EXP( -iw02*(y(j)-yf)*(y(j)-yf)/(1+irayl2*(xf-x(i))**2) &
+                   -(tenv_norm-itau_ivg*x(i))**sg ) / SQRT(SQRT(1+irayl2*(xf-x(i))**2)) &
+                   *SIN( pht-omega_ivph*x(i) - 0.5*ATAN2(xf-x(i),rayl) &
+                   + iw02*irayl*(y(j)-yf)*(y(j)-yf)*(xf-x(i))/(1+irayl2*(xf-x(i))**2) )
+            END DO
+          END DO
+#else
+          DO i = 1-ng,nx+ng
+            bz_total(i,:) = bz_total(i,:) + b0_amp * &
+                 EXP( -(tenv_norm-itau_ivg*x(i))**sg )*SIN( pht-omega_ivph*x(i) )
+          END DO
+#endif
 
         END SELECT
         current => current%next

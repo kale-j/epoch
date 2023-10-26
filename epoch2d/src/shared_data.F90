@@ -811,12 +811,27 @@ MODULE shared_data
     ! phase velocity direction (x_min -> +x)
     INTEGER :: boundary
     ! additional mandatory parameters
-    REAL(num) :: omega, a0, w0, tau
+    REAL(num) :: omega, a0, tau
     ! optional parameters
-    REAL(num) :: bf, xf, yf, zf, t0, ph0
+    REAL(num) :: t0, ph0
     INTEGER :: sg
     ! calculated quantities
-    REAL(num) :: e0, b0, e1, b1, rayl, vph, vg
+    REAL(num) :: e0, b0, vph, vg
+#if defined(APT_VACUUM_GAUSS)
+    ! additional mandatory parameters
+    REAL(num) :: w0
+    ! optional parameters
+    REAL(num) :: bf, xf, yf, zf
+    ! calculated quantities
+    REAL(num) :: e1, b1, rayl
+#elif defined(APT_VACUUM_GAUSS_2D)
+    ! additional mandatory parameters
+    REAL(num) :: w0
+    ! optional parameters
+    REAL(num) :: bf, xf, yf
+    ! calculated quantities
+    REAL(num) :: e1, rayl
+#endif
     TYPE(analytic_pulse_block), POINTER :: next
   END TYPE analytic_pulse_block
 

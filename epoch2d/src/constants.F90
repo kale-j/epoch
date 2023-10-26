@@ -297,6 +297,8 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_bremsstrahlung = 2**26
   INTEGER(i8), PARAMETER :: c_def_probe_time = 2**27
   INTEGER(i8), PARAMETER :: c_def_apt_vacuum = 2**28
+  INTEGER(i8), PARAMETER :: c_def_apt_vacuum_gauss = 2**29
+  INTEGER(i8), PARAMETER :: c_def_apt_vacuum_gauss_2d = 2**30
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x

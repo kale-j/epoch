@@ -266,6 +266,14 @@ DEFINES := $(DEFINE)
 # Disable MPI3 features
 #DEFINES += $(D)NO_MPI3
 
+# Analytic pulse technique splitting fields and current into analytically specified
+# and interanally advanced parts, see https://arxiv.org/abs/2307.04843
+# options are spatial plane wave (default), 3D gaussian, or 2D gaussian
+#DEFINES += $(D)APT_VACUUM
+#DEFINES += $(D)APT_VACUUM_GAUSS
+#DEFINES += $(D)APT_VACUUM_GAUSS_2D
+#DEFINES += $(D)APT_PLASMA
+
 # Set options for debugging deck
 # Sets warning messages to be errors
 #DEFINES += $(D)DECK_DEBUG
@@ -282,6 +290,12 @@ ifeq ($(strip $(MODE)),debug)
   DEFINES += $(D)DECK_DEBUG
 endif
 
+# set global flags for use with the analytic pulse technique (DO NOT comment this out)
+# options for vacuum implementation: APT_VACUUM, APT_VACUUM_GAUSS, APT_VACUUM_GAUSS_2D
+# options for plasma implementation: APT_PLASMA (plane wave is default)
+ifneq ($(strip $(findstring APT_VACUUM,$(DEFINES))),)
+  DEFINES += $(D)APT_VACUUM
+endif
 
 # --------------------------------------------------
 # Shouldn't need to touch below here

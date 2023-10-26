@@ -153,13 +153,30 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'w0')) THEN
-      working_analytic_pulse%w0 = as_real_print(value, element, errcode)
+    IF (str_cmp(element, 'tau')) THEN
+      working_analytic_pulse%tau = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'tau')) THEN
-      working_analytic_pulse%tau = as_real_print(value, element, errcode)
+    IF (str_cmp(element, 't0')) THEN
+      working_analytic_pulse%t0 = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'phase') .OR. str_cmp(element,'ph0')) THEN
+      working_analytic_pulse%ph0 = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'sg')) THEN
+      working_analytic_pulse%sg = as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+    ! parameters shared by 2D and 3D gaussians
+    IF (str_cmp(element, 'w0')) THEN
+      working_analytic_pulse%w0 = as_real_print(value, element, errcode)
       RETURN
     END IF
 
@@ -178,25 +195,14 @@ CONTAINS
       RETURN
     END IF
 
+#ifdef APT_VACUUM_GAUSS
+    ! only applicable to 3D gaussian
     IF (str_cmp(element, 'zf')) THEN
       working_analytic_pulse%zf = as_real_print(value, element, errcode)
       RETURN
     END IF
-
-    IF (str_cmp(element, 't0')) THEN
-      working_analytic_pulse%t0 = as_real_print(value, element, errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'phase') .OR. str_cmp(element,'ph0')) THEN
-      working_analytic_pulse%ph0 = as_real_print(value, element, errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'sg')) THEN
-      working_analytic_pulse%sg = as_integer_print(value, element, errcode)
-      RETURN
-    END IF
+#endif
+#endif
 
     errcode = c_err_unknown_element
 #endif
@@ -221,8 +227,10 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%a0 < 0.0_num) error = IOR(error, 2)
-      IF (current%w0 < 0.0_num) error = IOR(error, 4)
-      IF (current%tau < 0.0_num) error = IOR(error, 8)
+      IF (current%tau < 0.0_num) error = IOR(error, 4)
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+      IF (current%w0 < 0.0_num) error = IOR(error, 8)
+#endif
       current => current%next
     END DO
 
@@ -253,22 +261,25 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Must define a "w0" for every analytic pulse.'
-        END DO
-      END IF
-      errcode = c_err_missing_elements
-    END IF
-
-    IF (IAND(error, 8) /= 0) THEN
-      IF (rank == 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define a "tau" for every analytic pulse.'
         END DO
       END IF
       errcode = c_err_missing_elements
     END IF
+
+#if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+    IF (IAND(error, 8) /= 0) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Must define a "w0" for every analytic pulse.'
+        END DO
+      END IF
+      errcode = c_err_missing_elements
+    END IF
+#endif
+
 #endif
 
   END FUNCTION analytic_pulse_block_check

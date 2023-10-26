@@ -246,7 +246,7 @@ CONTAINS
 #elif defined(APT_VACUUM_GAUSS_2D)
           DO j = 1-ng,ny+ng
             DO i = 1-ng,nx+ng
-              ey_total(i,j,:) = ey_total(i,j:) + e0_amp * &
+              ey_total(i,j,:) = ey_total(i,j,:) + e0_amp * &
                    EXP( -iw02*(y(j)-yf)*(y(j)-yf)/(1+irayl2*(xf-xb(i))**2) &
                    -(tenv_norm-itau_ivg*xb(i))**sg ) / SQRT(SQRT(1+irayl2*(xf-xb(i))**2)) &
                    *SIN( pht-omega_ivph*xb(i) - 0.5*ATAN2(xf-xb(i),rayl) &
