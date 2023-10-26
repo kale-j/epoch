@@ -279,8 +279,16 @@ CONTAINS
     defines = IOR(defines, c_def_use_mpi3)
 #endif
 #ifdef APT_VACUUM
+#if defined(APT_VACUUM_GAUSS)
+    defines = IOR(defines, c_def_apt_vacuum_gauss)
+    WRITE(*,*) 'Vacuum implementation of analytic pulse technique with 3D Gaussian -DAPT_VACUUM_GAUSS'
+#elif defined(APT_VACUUM_GAUSS_2D)
+    defines = IOR(defines, c_def_apt_vacuum_gauss_2d)
+    WRITE(*,*) 'Vacuum implementation of analytic pulse technique with 2D Gaussian -DAPT_VACUUM_GAUSS_2D'
+#else
     defines = IOR(defines, c_def_apt_vacuum)
-    WRITE(*,*) 'Vacuum implementation of analytic pulse technique -DAPT_VACUUM'
+    WRITE(*,*) 'Vacuum implementation of analytic pulse technique with plane wave -DAPT_VACUUM'
+#endif    
 #endif    
     WRITE(*,*) '*************************************************************'
 
