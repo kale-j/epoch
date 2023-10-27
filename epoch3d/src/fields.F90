@@ -16,7 +16,10 @@
 MODULE fields
 
   USE boundary
-
+#ifdef APT_PLASMA
+  USE analytic_pulse
+#endif
+  
   IMPLICIT NONE
 
   INTEGER :: field_order
@@ -198,6 +201,22 @@ CONTAINS
             DO ix = 0, nx
               cx1 = cnx / cpml_kappa_ex(ix)
 
+#ifdef APT_PLASMA              
+              ex(ix, iy, iz) = ex(ix, iy, iz) &
+                  + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
+                  - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
+                  - fac * jx_diff(ix, iy, iz)
+
+              ey(ix, iy, iz) = ey(ix, iy, iz) &
+                  + cz1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy  , iz-1)) &
+                  - cx1 * (bz(ix  , iy  , iz  ) - bz(ix-1, iy  , iz  )) &
+                  - fac * jy_diff(ix, iy, iz)
+
+              ez(ix, iy, iz) = ez(ix, iy, iz) &
+                  + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
+                  - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
+                  - fac * jz_diff(ix, iy, iz)
+#else
               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
@@ -212,6 +231,7 @@ CONTAINS
                   + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
                   - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
                   - fac * jz(ix, iy, iz)
+#endif              
             END DO
           END DO
         END DO
@@ -232,6 +252,28 @@ CONTAINS
               cx1 = c1 * cpml_x
               cx2 = c2 * cpml_x
 
+#ifdef APT_PLASMA              
+              ex(ix, iy, iz) = ex(ix, iy, iz) &
+                  + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
+                  + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
+                  - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
+                  - cz2 * (by(ix  , iy  , iz+1) - by(ix  , iy  , iz-2)) &
+                  - fac * jx_diff(ix, iy, iz)
+
+              ey(ix, iy, iz) = ey(ix, iy, iz) &
+                  + cz1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy  , iz-1)) &
+                  + cz2 * (bx(ix  , iy  , iz+1) - bx(ix  , iy  , iz-2)) &
+                  - cx1 * (bz(ix  , iy  , iz  ) - bz(ix-1, iy  , iz  )) &
+                  - cx2 * (bz(ix+1, iy  , iz  ) - bz(ix-2, iy  , iz  )) &
+                  - fac * jy_diff(ix, iy, iz)
+
+              ez(ix, iy, iz) = ez(ix, iy, iz) &
+                  + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
+                  + cx2 * (by(ix+1, iy  , iz  ) - by(ix-2, iy  , iz  )) &
+                  - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
+                  - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
+                  - fac * jz_diff(ix, iy, iz)
+#else
               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
@@ -252,6 +294,7 @@ CONTAINS
                   - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
                   - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
                   - fac * jz(ix, iy, iz)
+#endif              
             END DO
           END DO
         END DO
@@ -276,6 +319,34 @@ CONTAINS
               cx2 = c2 * cpml_x
               cx3 = c3 * cpml_x
 
+#ifdef APT_PLASMA              
+              ex(ix, iy, iz) = ex(ix, iy, iz) &
+                  + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
+                  + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
+                  + cy3 * (bz(ix  , iy+2, iz  ) - bz(ix  , iy-3, iz  )) &
+                  - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
+                  - cz2 * (by(ix  , iy  , iz+1) - by(ix  , iy  , iz-2)) &
+                  - cz3 * (by(ix  , iy  , iz+2) - by(ix  , iy  , iz-3)) &
+                  - fac * jx_diff(ix, iy, iz)
+
+              ey(ix, iy, iz) = ey(ix, iy, iz) &
+                  + cz1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy  , iz-1)) &
+                  + cz2 * (bx(ix  , iy  , iz+1) - bx(ix  , iy  , iz-2)) &
+                  + cz3 * (bx(ix  , iy  , iz+2) - bx(ix  , iy  , iz-3)) &
+                  - cx1 * (bz(ix  , iy  , iz  ) - bz(ix-1, iy  , iz  )) &
+                  - cx2 * (bz(ix+1, iy  , iz  ) - bz(ix-2, iy  , iz  )) &
+                  - cx3 * (bz(ix+2, iy  , iz  ) - bz(ix-3, iy  , iz  )) &
+                  - fac * jy_diff(ix, iy, iz)
+
+              ez(ix, iy, iz) = ez(ix, iy, iz) &
+                  + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
+                  + cx2 * (by(ix+1, iy  , iz  ) - by(ix-2, iy  , iz  )) &
+                  + cx3 * (by(ix+2, iy  , iz  ) - by(ix-3, iy  , iz  )) &
+                  - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
+                  - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
+                  - cy3 * (bx(ix  , iy+2, iz  ) - bx(ix  , iy-3, iz  )) &
+                  - fac * jz_diff(ix, iy, iz)
+#else
               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
@@ -302,7 +373,8 @@ CONTAINS
                   - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
                   - cy3 * (bx(ix  , iy+2, iz  ) - bx(ix  , iy-3, iz  )) &
                   - fac * jz(ix, iy, iz)
-            END DO
+#endif              
+           END DO
           END DO
         END DO
       END IF
@@ -317,6 +389,22 @@ CONTAINS
         DO iz = 0, nz
           DO iy = 0, ny
             DO ix = 0, nx
+#ifdef APT_PLASMA
+               ex(ix, iy, iz) = ex(ix, iy, iz) &
+                  + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
+                  - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
+                  - fac * jx_diff(ix, iy, iz)
+
+              ey(ix, iy, iz) = ey(ix, iy, iz) &
+                  + cz1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy  , iz-1)) &
+                  - cx1 * (bz(ix  , iy  , iz  ) - bz(ix-1, iy  , iz  )) &
+                  - fac * jy_diff(ix, iy, iz)
+
+              ez(ix, iy, iz) = ez(ix, iy, iz) &
+                  + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
+                  - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
+                  - fac * jz_diff(ix, iy, iz)
+#else
               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
@@ -331,6 +419,7 @@ CONTAINS
                   + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
                   - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
                   - fac * jz(ix, iy, iz)
+#endif              
             END DO
           END DO
         END DO
@@ -348,7 +437,29 @@ CONTAINS
         DO iz = 0, nz
           DO iy = 0, ny
             DO ix = 0, nx
-              ex(ix, iy, iz) = ex(ix, iy, iz) &
+#ifdef APT_PLASMA
+               ex(ix, iy, iz) = ex(ix, iy, iz) &
+                  + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
+                  + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
+                  - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
+                  - cz2 * (by(ix  , iy  , iz+1) - by(ix  , iy  , iz-2)) &
+                  - fac * jx_diff(ix, iy, iz)
+
+              ey(ix, iy, iz) = ey(ix, iy, iz) &
+                  + cz1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy  , iz-1)) &
+                  + cz2 * (bx(ix  , iy  , iz+1) - bx(ix  , iy  , iz-2)) &
+                  - cx1 * (bz(ix  , iy  , iz  ) - bz(ix-1, iy  , iz  )) &
+                  - cx2 * (bz(ix+1, iy  , iz  ) - bz(ix-2, iy  , iz  )) &
+                  - fac * jy_diff(ix, iy, iz)
+
+              ez(ix, iy, iz) = ez(ix, iy, iz) &
+                  + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
+                  + cx2 * (by(ix+1, iy  , iz  ) - by(ix-2, iy  , iz  )) &
+                  - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
+                  - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
+                  - fac * jz_diff(ix, iy, iz)
+#else
+               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
                   - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
@@ -368,6 +479,7 @@ CONTAINS
                   - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
                   - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
                   - fac * jz(ix, iy, iz)
+#endif              
             END DO
           END DO
         END DO
@@ -389,7 +501,35 @@ CONTAINS
         DO iz = 0, nz
           DO iy = 0, ny
             DO ix = 0, nx
-              ex(ix, iy, iz) = ex(ix, iy, iz) &
+#ifdef APT_PLASMA
+               ex(ix, iy, iz) = ex(ix, iy, iz) &
+                  + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
+                  + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
+                  + cy3 * (bz(ix  , iy+2, iz  ) - bz(ix  , iy-3, iz  )) &
+                  - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
+                  - cz2 * (by(ix  , iy  , iz+1) - by(ix  , iy  , iz-2)) &
+                  - cz3 * (by(ix  , iy  , iz+2) - by(ix  , iy  , iz-3)) &
+                  - fac * jx_diff(ix, iy, iz)
+
+              ey(ix, iy, iz) = ey(ix, iy, iz) &
+                  + cz1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy  , iz-1)) &
+                  + cz2 * (bx(ix  , iy  , iz+1) - bx(ix  , iy  , iz-2)) &
+                  + cz3 * (bx(ix  , iy  , iz+2) - bx(ix  , iy  , iz-3)) &
+                  - cx1 * (bz(ix  , iy  , iz  ) - bz(ix-1, iy  , iz  )) &
+                  - cx2 * (bz(ix+1, iy  , iz  ) - bz(ix-2, iy  , iz  )) &
+                  - cx3 * (bz(ix+2, iy  , iz  ) - bz(ix-3, iy  , iz  )) &
+                  - fac * jy_diff(ix, iy, iz)
+
+              ez(ix, iy, iz) = ez(ix, iy, iz) &
+                  + cx1 * (by(ix  , iy  , iz  ) - by(ix-1, iy  , iz  )) &
+                  + cx2 * (by(ix+1, iy  , iz  ) - by(ix-2, iy  , iz  )) &
+                  + cx3 * (by(ix+2, iy  , iz  ) - by(ix-3, iy  , iz  )) &
+                  - cy1 * (bx(ix  , iy  , iz  ) - bx(ix  , iy-1, iz  )) &
+                  - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
+                  - cy3 * (bx(ix  , iy+2, iz  ) - bx(ix  , iy-3, iz  )) &
+                  - fac * jz_diff(ix, iy, iz)
+#else
+               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   + cy2 * (bz(ix  , iy+1, iz  ) - bz(ix  , iy-2, iz  )) &
                   + cy3 * (bz(ix  , iy+2, iz  ) - bz(ix  , iy-3, iz  )) &
@@ -415,6 +555,7 @@ CONTAINS
                   - cy2 * (bx(ix  , iy+1, iz  ) - bx(ix  , iy-2, iz  )) &
                   - cy3 * (bx(ix  , iy+2, iz  ) - bx(ix  , iy-3, iz  )) &
                   - fac * jz(ix, iy, iz)
+#endif              
             END DO
           END DO
         END DO
@@ -861,6 +1002,10 @@ CONTAINS
 
     fac = hdt / epsilon0
 
+#ifdef APT_PLASMA
+    CALL analytic_pulse_update_j
+#endif
+    
     CALL update_b_field
 
     CALL bfield_final_bcs

@@ -399,6 +399,21 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bz(laserpos-1, 0:ny, 0:nz) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ey_x_min(0:ny, 0:nz) + c * bz_x_min(0:ny, 0:nz)) &
+        - 2.0_num * ey(laserpos, 0:ny, 0:nz) &
+        - lz * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, 0:ny, -1:nz-1)) &
+        + dt_eps * jy_diff(laserpos, 0:ny, 0:nz) &
+        + diff * bz(laserpos, 0:ny, 0:nz))
+
+    by(laserpos-1, 0:ny, 0:nz) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ez_x_min(0:ny, 0:nz) - c * by_x_min(0:ny, 0:nz)) &
+        + 2.0_num * ez(laserpos, 0:ny, 0:nz) &
+        - ly * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, -1:ny-1, 0:nz)) &
+        - dt_eps * jz_diff(laserpos, 0:ny, 0:nz) &
+        + diff * by(laserpos, 0:ny, 0:nz))
+#else
     bz(laserpos-1, 0:ny, 0:nz) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ey_x_min(0:ny, 0:nz) + c * bz_x_min(0:ny, 0:nz)) &
         - 2.0_num * ey(laserpos, 0:ny, 0:nz) &
@@ -412,7 +427,8 @@ CONTAINS
         - ly * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, -1:ny-1, 0:nz)) &
         - dt_eps * jz(laserpos, 0:ny, 0:nz) &
         + diff * by(laserpos, 0:ny, 0:nz))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -479,6 +495,21 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA        
+    bz(laserpos, 0:ny, 0:nz) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ey_x_max(0:ny, 0:nz) - c * bz_x_max(0:ny, 0:nz)) &
+        + 2.0_num * ey(laserpos, 0:ny, 0:nz) &
+        + lz * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, 0:ny, -1:nz-1)) &
+        - dt_eps * jy_diff(laserpos, 0:ny, 0:nz) &
+        + diff * bz(laserpos-1, 0:ny, 0:nz))
+
+    by(laserpos, 0:ny, 0:nz) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ez_x_max(0:ny, 0:nz) + c * by_x_max(0:ny, 0:nz)) &
+        - 2.0_num * ez(laserpos, 0:ny, 0:nz) &
+        + ly * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, -1:ny-1, 0:nz)) &
+        + dt_eps * jz_diff(laserpos, 0:ny, 0:nz) &
+        + diff * by(laserpos-1, 0:ny, 0:nz))
+#else
     bz(laserpos, 0:ny, 0:nz) = sum * (-4.0_num * source1 &
         - 2.0_num * (ey_x_max(0:ny, 0:nz) - c * bz_x_max(0:ny, 0:nz)) &
         + 2.0_num * ey(laserpos, 0:ny, 0:nz) &
@@ -492,7 +523,8 @@ CONTAINS
         + ly * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, -1:ny-1, 0:nz)) &
         + dt_eps * jz(laserpos, 0:ny, 0:nz) &
         + diff * by(laserpos-1, 0:ny, 0:nz))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -559,6 +591,21 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bx(0:nx, laserpos-1, 0:nz) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ez_y_min(0:nx, 0:nz) + c * bx_y_min(0:nx, 0:nz)) &
+        - 2.0_num * ez(0:nx, laserpos, 0:nz) &
+        - lx * (by(0:nx, laserpos, 0:nz) - by(-1:nx-1, laserpos, 0:nz)) &
+        + dt_eps * jz_diff(0:nx, laserpos, 0:nz) &
+        + diff * bx(0:nx, laserpos, 0:nz))
+
+    bz(0:nx, laserpos-1, 0:nz) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ex_y_min(0:nx, 0:nz) - c * bz_y_min(0:nx, 0:nz)) &
+        + 2.0_num * ex(0:nx, laserpos, 0:nz) &
+        - lz * (by(0:nx, laserpos, 0:nz) - by(0:nx, laserpos, -1:nz-1)) &
+        - dt_eps * jx_diff(0:nx, laserpos, 0:nz) &
+        + diff * bz(0:nx, laserpos, 0:nz))
+#else
     bx(0:nx, laserpos-1, 0:nz) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ez_y_min(0:nx, 0:nz) + c * bx_y_min(0:nx, 0:nz)) &
         - 2.0_num * ez(0:nx, laserpos, 0:nz) &
@@ -572,7 +619,8 @@ CONTAINS
         - lz * (by(0:nx, laserpos, 0:nz) - by(0:nx, laserpos, -1:nz-1)) &
         - dt_eps * jx(0:nx, laserpos, 0:nz) &
         + diff * bz(0:nx, laserpos, 0:nz))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -639,6 +687,21 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bx(0:nx, laserpos, 0:nz) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ez_y_max(0:nx, 0:nz) - c * bx_y_max(0:nx, 0:nz)) &
+        + 2.0_num * ez(0:nx, laserpos, 0:nz) &
+        + lx * (by(0:nx, laserpos, 0:nz) - by(-1:nx-1, laserpos, 0:nz)) &
+        - dt_eps * jz_diff(0:nx, laserpos, 0:nz) &
+        + diff * bx(0:nx, laserpos-1, 0:nz))
+
+    bz(0:nx, laserpos, 0:nz) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ex_y_max(0:nx, 0:nz) + c * bz_y_max(0:nx, 0:nz)) &
+        - 2.0_num * ex(0:nx, laserpos, 0:nz) &
+        + lz * (by(0:nx, laserpos, 0:nz) - by(0:nx, laserpos, -1:nz-1)) &
+        + dt_eps * jx_diff(0:nx, laserpos, 0:nz) &
+        + diff * bz(0:nx, laserpos-1, 0:nz))
+#else
     bx(0:nx, laserpos, 0:nz) = sum * (-4.0_num * source1 &
         - 2.0_num * (ez_y_max(0:nx, 0:nz) - c * bx_y_max(0:nx, 0:nz)) &
         + 2.0_num * ez(0:nx, laserpos, 0:nz) &
@@ -652,7 +715,8 @@ CONTAINS
         + lz * (by(0:nx, laserpos, 0:nz) - by(0:nx, laserpos, -1:nz-1)) &
         + dt_eps * jx(0:nx, laserpos, 0:nz) &
         + diff * bz(0:nx, laserpos-1, 0:nz))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -719,6 +783,21 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    by(0:nx, 0:ny, laserpos-1) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ex_z_min(0:nx, 0:ny) + c * by_z_min(0:nx, 0:ny)) &
+        - 2.0_num * ex(0:nx, 0:ny, laserpos) &
+        - ly * (bz(0:nx, 0:ny, laserpos) - bz(0:nx, -1:ny-1, laserpos)) &
+        + dt_eps * jx_diff(0:nx, 0:ny, laserpos) &
+        + diff * by(0:nx, 0:ny, laserpos))
+
+    bx(0:nx, 0:ny, laserpos-1) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ey_z_min(0:nx, 0:ny) - c * bx_z_min(0:nx, 0:ny)) &
+        + 2.0_num * ey(0:nx, 0:ny, laserpos) &
+        - lx * (bz(0:nx, 0:ny, laserpos) - bz(-1:nx-1, 0:ny, laserpos)) &
+        - dt_eps * jy_diff(0:nx, 0:ny, laserpos) &
+        + diff * bx(0:nx, 0:ny, laserpos))
+#else
     by(0:nx, 0:ny, laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ex_z_min(0:nx, 0:ny) + c * by_z_min(0:nx, 0:ny)) &
         - 2.0_num * ex(0:nx, 0:ny, laserpos) &
@@ -732,7 +811,8 @@ CONTAINS
         - lx * (bz(0:nx, 0:ny, laserpos) - bz(-1:nx-1, 0:ny, laserpos)) &
         - dt_eps * jy(0:nx, 0:ny, laserpos) &
         + diff * bx(0:nx, 0:ny, laserpos))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -799,6 +879,21 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    by(0:nx, 0:ny, laserpos) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ex_z_max(0:nx, 0:ny) - c * by_z_max(0:nx, 0:ny)) &
+        + 2.0_num * ex(0:nx, 0:ny, laserpos) &
+        + ly * (bz(0:nx, 0:ny, laserpos) - bz(0:nx, -1:ny-1, laserpos)) &
+        - dt_eps * jx_diff(0:nx, 0:ny, laserpos) &
+        + diff * by(0:nx, 0:ny, laserpos-1))
+
+    bx(0:nx, 0:ny, laserpos) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ey_z_max(0:nx, 0:ny) + c * bx_z_max(0:nx, 0:ny)) &
+        - 2.0_num * ey(0:nx, 0:ny, laserpos) &
+        + lx * (bz(0:nx, 0:ny, laserpos) - bz(-1:nx-1, 0:ny, laserpos)) &
+        + dt_eps * jy_diff(0:nx, 0:ny, laserpos) &
+        + diff * bx(0:nx, 0:ny, laserpos-1))
+#else
     by(0:nx, 0:ny, laserpos) = sum * (-4.0_num * source1 &
         - 2.0_num * (ex_z_max(0:nx, 0:ny) - c * by_z_max(0:nx, 0:ny)) &
         + 2.0_num * ex(0:nx, 0:ny, laserpos) &
@@ -812,7 +907,8 @@ CONTAINS
         + lx * (bz(0:nx, 0:ny, laserpos) - bz(-1:nx-1, 0:ny, laserpos)) &
         + dt_eps * jy(0:nx, 0:ny, laserpos) &
         + diff * bx(0:nx, 0:ny, laserpos-1))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN

@@ -20,7 +20,7 @@ MODULE particles
 #ifdef PREFETCH
   USE prefetch
 #endif
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   USE analytic_pulse
 #endif
   
@@ -149,7 +149,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, next
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     CALL analytic_pulse_total_fields
 #endif
     
@@ -411,7 +411,7 @@ CONTAINS
         ! These are the electric and magnetic fields interpolated to the
         ! particle position. They have been checked and are correct.
         ! Actually checking this is messy.
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/e_total_part.inc"
 #include "bspline3/b_total_part.inc"

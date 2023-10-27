@@ -30,7 +30,7 @@ MODULE diagnostics
   USE window
   USE timer
   USE particle_id_hash_mod
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   USE analytic_pulse
 #endif
   
@@ -235,7 +235,10 @@ CONTAINS
         (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
-
+#ifdef APT_PLASMA
+    REAL(num) :: time_store
+#endif
+    
     ! Clean-up any cached RNG state
     CALL random_flush_cache
 
@@ -309,9 +312,9 @@ CONTAINS
       CALL sdf_set_point_array_size(sdf_buffer_size)
       sdf_max_string_length = sdf_get_max_string_length()
       max_string_length = MIN(sdf_max_string_length, c_max_string_length)
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
       ! in case total fields are needed
-      CALL analytic_pulse_total_fields
+      CALL analytic_pulse_total_fields      
 #endif
     END IF
 
@@ -524,7 +527,7 @@ CONTAINS
             'CPML/By_z', 'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
       END IF
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
       CALL write_field(c_dump_ex_total, code, 'ex_total', 'Electric Field/Ex_total', 'V/m', &
           c_stagger_ex, ex_total)
       CALL write_field(c_dump_ey_total, code, 'ey_total', 'Electric Field/Ey_total', 'V/m', &
@@ -538,6 +541,24 @@ CONTAINS
           c_stagger_by, by_total)
       CALL write_field(c_dump_bz_total, code, 'bz_total', 'Magnetic Field/Bz_total', 'T', &
           c_stagger_bz, bz_total)
+
+#ifdef APT_PLASMA      
+      ! update j_diff if needed
+      IF ((IAND(iomask(c_dump_jx_diff), code) /= 0) .OR. (IAND(iomask(c_dump_jy_diff), code) /= 0) &
+           .OR. (IAND(iomask(c_dump_jz_diff), code) /= 0)) THEN
+         ! time used in update_eb_fields_final is advanced by half step
+         time_store = time
+         time = time + dt / 2.0_num
+         CALL analytic_pulse_update_j
+         time = time_store
+      END IF
+      CALL write_field(c_dump_jx_diff, code, 'jx_diff', 'Current/Jx_diff', 'A/m^2', &
+          c_stagger_jx, jx_diff)
+      CALL write_field(c_dump_jy_diff, code, 'jy_diff', 'Current/Jy_diff', 'A/m^2', &
+          c_stagger_jy, jy_diff)
+      CALL write_field(c_dump_jz_diff, code, 'jz_diff', 'Current/Jz_diff', 'A/m^2', &
+          c_stagger_jz, jz_diff)
+#endif
 #endif
 
       IF (n_subsets > 0) THEN
@@ -1542,7 +1563,7 @@ CONTAINS
       CASE(c_dump_jz)
         avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) &
             + REAL(jz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt, r4)
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
       CASE(c_dump_ex_total)
         avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) + REAL(ex_total * dt, r4)
       CASE(c_dump_ey_total)
@@ -1555,6 +1576,17 @@ CONTAINS
         avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) + REAL(by_total * dt, r4)
       CASE(c_dump_bz_total)
         avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) + REAL(bz_total * dt, r4)
+#ifdef APT_PLASMA
+      CASE(c_dump_jx_diff)
+        avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) &
+            + REAL(jx_diff(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt, r4)
+      CASE(c_dump_jy_diff)
+        avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) &
+            + REAL(jy_diff(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt, r4)
+      CASE(c_dump_jz_diff)
+        avg%r4array(:,:,:,1) = avg%r4array(:,:,:,1) &
+            + REAL(jz_diff(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt, r4)
+#endif        
 #endif
       CASE(c_dump_ekbar)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1712,7 +1744,7 @@ CONTAINS
       CASE(c_dump_jz)
         avg%array(:,:,:,1) = avg%array(:,:,:,1) &
             + jz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
       CASE(c_dump_ex_total)
         avg%array(:,:,:,1) = avg%array(:,:,:,1) + ex_total * dt
       CASE(c_dump_ey_total)
@@ -1725,7 +1757,18 @@ CONTAINS
         avg%array(:,:,:,1) = avg%array(:,:,:,1) + by_total * dt
       CASE(c_dump_bz_total)
         avg%array(:,:,:,1) = avg%array(:,:,:,1) + bz_total * dt
+#ifdef APT_PLASMA        
+      CASE(c_dump_jx_diff)
+        avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + jx_diff(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt
+      CASE(c_dump_jy_diff)
+        avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + jy_diff(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt
+      CASE(c_dump_jz_diff)
+        avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + jz_diff(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) * dt
 #endif
+#endif        
       CASE(c_dump_ekbar)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
@@ -1885,14 +1928,24 @@ CONTAINS
 
     IF (convert) THEN
       subtype  = subtype_field_r4
+#if APT_PLASMA
+      IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz &
+           .OR. id == c_dump_jx_diff .OR. id == c_dump_jy_diff .OR. id == c_dump_jz_diff ) THEN
+#else
       IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz) THEN
+#endif
         subarray = subarray_field_big_r4
       ELSE
         subarray = subarray_field_r4
       END IF
     ELSE
       subtype  = subtype_field
+#if APT_PLASMA
+      IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz &
+           .OR. id == c_dump_jx_diff .OR. id == c_dump_jy_diff .OR. id == c_dump_jz_diff ) THEN
+#else
       IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz) THEN
+#endif
         subarray = subarray_field_big
       ELSE
         subarray = subarray_field

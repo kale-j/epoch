@@ -18,7 +18,10 @@ MODULE window
   USE boundary
   USE partlist
   USE evaluator
-
+#ifdef APT_PLASMA
+  USE analytic_pulse
+#endif
+  
   IMPLICIT NONE
 
   REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:), drift(:,:,:)
@@ -91,6 +94,11 @@ CONTAINS
       CALL shift_fields
     END DO
 
+#ifdef APT_PLASMA
+    ! need to update current for field update
+    CALL analytic_pulse_update_j
+#endif
+    
   END SUBROUTINE shift_window
 
 
@@ -169,7 +177,7 @@ CONTAINS
         END DO
       END IF
     END IF
-
+    
   END SUBROUTINE shift_fields
 
 
@@ -297,6 +305,23 @@ CONTAINS
 
             temp_local = 0.0_num
             drift_local = 0.0_num
+            
+#ifdef APT_PLASMA
+            ! CAUTION: this feature is experimental
+            ! give the particle extra drift momentum so that analytic current is matched by physical current at the boundary
+            ! note: this only works properly if the partilce is non-relativistic, the plasma response is linear at the boundary,
+            ! and the current density on the boundary is matched well
+            IF (.NOT. species%immobile) THEN
+#ifndef PER_PARTICLE_CHARGE_MASS        
+              drift_local = drift_local + analytic_pulse_drift(current%part_pos, &
+                   species%charge,species%mass)
+#else
+              drift_local = drift_local + analytic_pulse_drift(current%part_pos, &
+                   current%charge,current%mass) 
+#endif
+            END IF
+#endif
+            
             DO i = 1, c_ndirs
               DO isubz = -1, 1
                 DO isuby = -1, 1

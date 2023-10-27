@@ -15,7 +15,7 @@
 
 MODULE analytic_pulse
 
-#ifdef APT_VACUUM  
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   USE shared_data
   
   IMPLICIT NONE
@@ -43,6 +43,10 @@ CONTAINS
     analytic_pulse%zf = 0.0_num
 #endif
 #endif
+#ifdef APT_PLAMSA
+    analytic_pulse%wp2norm = -1.0_num
+#endif
+    
     NULLIFY(analytic_pulse%next)
 
   END SUBROUTINE init_analytic_pulse
@@ -97,23 +101,37 @@ CONTAINS
 
   SUBROUTINE setup_analytic_pulses
     ! called after dt is set
-    REAL(num) :: f, rfac
+    REAL(num) :: f2, rfac, wp2n, cvph2, s0
     TYPE(analytic_pulse_block), POINTER :: current
-    f = c*dt/dx
-
+    
     ! only x_min for now
     current => analytic_pulses
     DO WHILE(ASSOCIATED(current))
       IF (current%boundary == c_bd_x_min) THEN
+        f2 = (c*dt/dx)**2
         rfac = 0.25*(current%omega*dx/c)**2
+
         ! e0 set from a0
         current%e0 = current%a0 * current%omega * m0 * c/q0
-        ! b0 with numerical correction 
-        current%b0 = current%e0 * (1 + 0.5*f**2*rfac)/c
-        ! numerical phase and group velocity
-        current%vph = c*(1-(1-f**2)*rfac/6)
-        current%vg = c*(1-0.5*(1-f**2)*rfac)
+        ! phase velocity, group velocity, and b0, from dispersion relation
+#ifdef APT_VACUUM
+        wp2n = 0
+#else
+        ! plasma
+        wp2n = current%wp2norm
+#endif
+        ! general formulation for phase velocity based on dispersion relation has a parameter related to particle shape
+        ! s0 = 0.5*(b+f2*(a-1)); for triangle particle shape, b=2 and a=1
+        ! using the default value with a different particle shape may impair the stability of the simulation in some cases
+        s0 = 1.0_num
+        current%vph = c*(1-(1-f2 + wp2n*s0/(1-wp2n))*rfac/6)/SQRT(1-wp2n)
+        current%vg = c*SQRT(1-wp2n)*(1-(3*(1-f2)-wp2n*(2-2*f2-s0)-wp2n**2*s0/(1-wp2n))*rfac/6)
+        cvph2 = (c/current%vph)**2
+        ! b0 from e0 and phase velocity
+        current%b0 = current%e0 * (1-(cvph2+2*f2)*rfac/6)/current%vph
+        
 #if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
+        ! additional parameters for spatial profile
         ! e1, b1 from Lortentz transform
         current%e1 = current%e0 * (1-current%bf)
 #ifdef APT_VACUUM_GAUSS
@@ -124,10 +142,17 @@ CONTAINS
         current%xf = (1-current%bf)*current%xf - c*current%bf*current%t0 &
              + 0.5*c*current%bf*dt + current%bf*x_min
 #endif
+        
         ! t0 correction for evaluation time: t0 -> t0 - 0.5*dt
-        ! adjusted so that intensity peak is at input xf at time t0
+        ! additional correction so peak is at correct plane
         current%t0 = current%t0 - 0.5*dt - x_min/current%vg
         current%ph0 = current%ph0 + 0.5*current%omega*dt + current%omega*x_min/current%vph
+
+#ifdef APT_PLASMA
+        ! redefinition of wp2norm as amplitude of analytic current, for convenience
+        current%wp2norm = -current%omega * (cvph2-1-(2*cvph2**2-(cvph2+1)*f2)*rfac/6.0) * current%e0 * epsilon0
+#endif
+        
       END IF
       current => current%next
     END DO
@@ -167,7 +192,12 @@ CONTAINS
     REAL(num) :: zf, b1_amp
     INTEGER :: k
 #endif
-#endif    
+#endif
+#ifdef APT_PLASMA
+    ! extra variables, used for finite duration correction
+    REAL(num) :: env, phdt, adt1, adt2
+#endif
+    
     ex_total = 0
     ey_total = 0
     ez_total = 0
@@ -203,6 +233,13 @@ CONTAINS
           b1_amp = current%b1
 #endif
 #endif
+          
+#ifdef APT_PLASMA
+          ! finite duration correction for analytic current case
+          phdt = -((current%vg-current%vph)/current%vg)*sg/(current%omega*current%tau)
+          adt1 = -0.5*((current%vg**2-current%vph**2)/current%vg**2)*sg**2/(current%omega*current%tau)**2
+          adt2 = ((current%vg-current%vph)/current%vg)*sg*(sg-1)/(current%omega*current%tau)**2
+#endif         
           
           ! ex (two parts) -- 3D or 2D gaussian only
 #if defined(APT_VACUUM_GAUSS)
@@ -299,8 +336,16 @@ CONTAINS
           END DO
 #else
           DO i = 1-ng,nx+ng
+#ifdef APT_VACCUM             
             bz_total(i,:,:) = bz_total(i,:,:) + b0_amp * &
                  EXP( -(tenv_norm-itau_ivg*x(i))**sg )*SIN( pht-omega_ivph*x(i) )
+#else
+            ! plasma case, needs finite duration correction
+            env = tenv_norm-itau_ivg*x(i)
+            bz_total(i,:,:) = bz_total(i,:,:) + b0_amp * &
+                 EXP( -env**sg )*SIN( pht-omega_ivph*x(i) + phdt*env**(sg-1) ) &
+                 *( 1 + adt1*env**(2*sg-2) + adt2*env**(sg-2) )
+#endif            
           END DO
 #endif
         END SELECT
@@ -309,6 +354,128 @@ CONTAINS
 
   END SUBROUTINE analytic_pulse_update_arrays
 
+  ! subroutines for use with analytic current
+#ifdef APT_PLASMA
+  SUBROUTINE analytic_pulse_update_j
+    
+    CALL analytic_pulse_update_j_analytic
+
+    jx_diff = jx_diff + jx
+    jy_diff = jy_diff + jy
+    jz_diff = jz_diff + jz
+    
+  END SUBROUTINE analytic_pulse_update_j
+  
+  SUBROUTINE analytic_pulse_update_j_analytic
+
+    TYPE(analytic_pulse_block), POINTER :: current
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: n,i,err
+    ! copy for convenience
+    REAL(num) :: tenv_norm, itau_ivg, omega_ivph, pht
+    REAL(num) :: j0_amp
+    REAL(num) :: e0_amp, b0_amp, env
+    INTEGER :: sg
+    ! finite duration correction
+    REAL(num) :: phdt, adt1, adt2
+
+    ! important: j_diff = j_plasma - j_analytic
+    ! this subroutine gives -j_analytic
+    jx_diff = 0
+    jy_diff = 0
+    jz_diff = 0
+
+    current => analytic_pulses
+    
+    DO WHILE(ASSOCIATED(current))
+      ! evaluate the temporal evolution of the analytic_current
+      ! loop over position
+      ! note: time must be at n+1/2
+      SELECT CASE(current%boundary)
+          
+      CASE(c_bd_x_min)         
+        tenv_norm = (time-dt/2.0_num-current%t0)/current%tau
+        itau_ivg = 1.0_num/(current%tau*current%vg)
+        sg = 2*current%sg
+        omega_ivph = current%omega/current%vph
+        pht = current%ph0 + current%omega*(time-dt/2.0_num)
+        j0_amp = current%wp2norm
+
+        ! finite duration correction for current envelope
+        phdt = -sg/(current%omega*current%tau)
+        adt1 = -0.5*sg**2/(current%omega*current%tau)**2
+        adt2 = sg*(sg-1)/(current%omega*current%tau)**2
+         
+        ! jy
+        DO i = 1-jng,nx+jng
+          env = tenv_norm-itau_ivg*xb(i)
+          jy_diff(i,:,:) = jy_diff(i,:,:) + j0_amp * &
+               EXP( -env**sg )*COS( pht-omega_ivph*xb(i) + phdt*env**(sg-1) ) &
+               *( 1 + adt1*env**(2*sg-2) + adt2*env**(sg-2) )
+        END DO
+      END SELECT
+      current => current%next
+    END DO
+    
+  END SUBROUTINE analytic_pulse_update_j_analytic
+
+  FUNCTION analytic_pulse_drift(part_pos,part_q,part_m)
+    ! CAUTION: this feature is experimental and not extensively tested
+    ! deterministic particle momentum for moving window or initialization
+    ! note: requires a0 < 1 at particle location
+    ! probably only good for a0 < 0.25 or so, since it ignores nonlinear response
+    REAL(num), DIMENSION(c_ndirs) :: analytic_pulse_drift
+    REAL(num), DIMENSION(c_ndims), INTENT(IN) :: part_pos
+    REAL(num), INTENT(IN) :: part_q, part_m
+    TYPE(analytic_pulse_block), POINTER :: current
+    REAL(num), DIMENSION(c_ndirs) :: drift
+    INTEGER :: n
+    ! copy for convenience
+    REAL(num) :: tenv_norm, itau_ivg, omega_ivph, pht, p_amp
+    REAL(num) :: e0_amp, b0_amp, env, dmag
+    INTEGER :: sg
+    ! finite duration correction
+    REAL(num) :: phdt, adt1, adt2, phdtc1, phdtc2
+    
+    drift = 0
+
+    current => analytic_pulses
+    
+    DO WHILE(ASSOCIATED(current))
+      SELECT CASE(current%boundary)          
+      CASE(c_bd_x_min)         
+        tenv_norm = (time-dt/2.0_num-current%t0)/current%tau
+        itau_ivg = 1.0_num/(current%tau*current%vg)
+        sg = 2*current%sg
+        omega_ivph = current%omega/current%vph
+        pht = current%ph0 + current%omega*(time-dt/2.0_num)
+        ! - sign because part_q is -q0 for electron
+        p_amp = -current%a0 * part_q/q0 * m0/part_m
+
+        ! finite duration correction for current envelope
+        phdt = -sg/(current%omega*current%tau)
+        adt1 = -0.5*sg**2/(current%omega*current%tau)**2
+        adt2 = sg*(sg-1)/(current%omega*current%tau)**2
+
+        ! drift py
+        env = tenv_norm-itau_ivg*part_pos(1)
+        drift(2) = drift(2) + p_amp * &
+             EXP( -env**sg )*COS( pht-omega_ivph*part_pos(1) + phdt*env**(sg-1) ) &
+             *( 1 + adt1*env**(2*sg-2) + adt2*env**(sg-2) )
+
+        current => current%next
+      END SELECT
+    END DO
+    
+    ! warning: will break horribly if drift > 1
+    ! set max value just in case, gives p/mc ~ 2
+    dmag = SQRT(SUM(drift*drift))
+    drift = (drift/dmag)*MIN(dmag, 0.9_num)
+    analytic_pulse_drift = part_m * c * drift/SQRT(1-SUM(drift*drift))
+    
+  END FUNCTION analytic_pulse_drift
+#endif  
+  
 #endif
   
 END MODULE analytic_pulse

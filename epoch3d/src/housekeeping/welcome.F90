@@ -162,6 +162,9 @@ CONTAINS
 #ifdef APT_VACUUM
     found = .TRUE.
 #endif
+#ifdef APT_PLASMA
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -289,6 +292,10 @@ CONTAINS
     defines = IOR(defines, c_def_apt_vacuum)
     WRITE(*,*) 'Vacuum implementation of analytic pulse technique with plane wave -DAPT_VACUUM'
 #endif    
+#endif    
+#ifdef APT_PLASMA
+    defines = IOR(defines, c_def_apt_plasma)
+    WRITE(*,*) 'Plasma (analytic current) implementation of analytic pulse technique with plane wave -DAPT_PLASMA'
 #endif    
     WRITE(*,*) '*************************************************************'
 
