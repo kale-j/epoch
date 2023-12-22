@@ -16,6 +16,9 @@
 MODULE fields
 
   USE boundary
+#ifdef APT_PLASMA
+  USE analytic_pulse
+#endif
 
   IMPLICIT NONE
 
@@ -85,6 +88,18 @@ CONTAINS
         DO ix = 0, nx
           cx1 = cnx / cpml_kappa_ex(ix)
 
+#ifdef APT_PLASMA
+          ex(ix) = ex(ix) &
+              - fac * jx_diff(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - fac * jy_diff(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              - fac * jz_diff(ix)
+#else
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -95,6 +110,7 @@ CONTAINS
           ez(ix) = ez(ix) &
               + cx1 * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
+#endif          
         END DO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
@@ -105,6 +121,20 @@ CONTAINS
           cx1 = c1 * cpml_x
           cx2 = c2 * cpml_x
 
+#ifdef APT_PLASMA
+          ex(ix) = ex(ix) &
+              - fac * jx_diff(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - fac * jy_diff(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              - fac * jz_diff(ix)
+#else
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -117,6 +147,7 @@ CONTAINS
               + cx1 * (by(ix  ) - by(ix-1)) &
               + cx2 * (by(ix+1) - by(ix-2)) &
               - fac * jz(ix)
+#endif          
         END DO
       ELSE
         c1 = 75.0_num / 64.0_num
@@ -129,6 +160,22 @@ CONTAINS
           cx2 = c2 * cpml_x
           cx3 = c3 * cpml_x
 
+#ifdef APT_PLASMA
+          ex(ix) = ex(ix) &
+              - fac * jx_diff(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - cx3 * (bz(ix+2) - bz(ix-3)) &
+              - fac * jy_diff(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              + cx3 * (by(ix+2) - by(ix-3)) &
+              - fac * jz_diff(ix)
+#else
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -143,6 +190,7 @@ CONTAINS
               + cx2 * (by(ix+1) - by(ix-2)) &
               + cx3 * (by(ix+2) - by(ix-3)) &
               - fac * jz(ix)
+#endif          
         END DO
       END IF
 
@@ -152,6 +200,18 @@ CONTAINS
         cx1 = cnx
 
         DO ix = 0, nx
+#ifdef APT_PLASMA
+          ex(ix) = ex(ix) &
+              - fac * jx_diff(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - fac * jy_diff(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              - fac * jz_diff(ix)
+#else
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -162,6 +222,7 @@ CONTAINS
           ez(ix) = ez(ix) &
               + cx1 * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
+#endif          
         END DO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
@@ -171,6 +232,20 @@ CONTAINS
         cx2 = c2 * cnx
 
         DO ix = 0, nx
+#ifdef APT_PLASMA
+          ex(ix) = ex(ix) &
+              - fac * jx_diff(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - fac * jy_diff(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              - fac * jz_diff(ix)
+#else
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -183,6 +258,7 @@ CONTAINS
               + cx1 * (by(ix  ) - by(ix-1)) &
               + cx2 * (by(ix+1) - by(ix-2)) &
               - fac * jz(ix)
+#endif          
         END DO
       ELSE
         c1 = 75.0_num / 64.0_num
@@ -194,6 +270,22 @@ CONTAINS
         cx3 = c3 * cnx
 
         DO ix = 0, nx
+#ifdef APT_PLASMA
+          ex(ix) = ex(ix) &
+              - fac * jx_diff(ix)
+
+          ey(ix) = ey(ix) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
+              - cx2 * (bz(ix+1) - bz(ix-2)) &
+              - cx3 * (bz(ix+2) - bz(ix-3)) &
+              - fac * jy_diff(ix)
+
+          ez(ix) = ez(ix) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
+              + cx2 * (by(ix+1) - by(ix-2)) &
+              + cx3 * (by(ix+2) - by(ix-3)) &
+              - fac * jz_diff(ix)
+#else
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -208,6 +300,7 @@ CONTAINS
               + cx2 * (by(ix+1) - by(ix-2)) &
               + cx3 * (by(ix+2) - by(ix-3)) &
               - fac * jz(ix)
+#endif          
         END DO
       END IF
     END IF
@@ -391,6 +484,10 @@ CONTAINS
     cnx = hdtx * c**2
 
     fac = hdt / epsilon0
+
+#ifdef APT_PLASMA
+    CALL analytic_pulse_update_j
+#endif
 
     CALL update_b_field
 

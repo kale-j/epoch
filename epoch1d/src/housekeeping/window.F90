@@ -18,6 +18,9 @@ MODULE window
   USE boundary
   USE partlist
   USE evaluator
+#ifdef APT_PLASMA
+  USE analytic_pulse
+#endif
 
   IMPLICIT NONE
 
@@ -84,6 +87,11 @@ CONTAINS
       ! Shift fields around
       CALL shift_fields
     END DO
+
+#ifdef APT_PLASMA
+    ! need to update current for field update
+    CALL analytic_pulse_update_j
+#endif
 
   END SUBROUTINE shift_window
 
@@ -166,7 +174,9 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
     TYPE(particle_species), POINTER :: species
     REAL(num), DIMENSION(c_ndirs, 2) :: ranges
-
+#ifdef APT_PLASMA
+    REAL(num), DIMENSION(c_ndirs) :: drift_local_analytic
+#endif    
     ! This subroutine injects particles at the right hand edge of the box
 
     ! Only processors on the right need do anything
@@ -218,16 +228,41 @@ CONTAINS
         CALL create_particle(current)
         current%part_pos = x0 + random() * dx
 
+#ifdef APT_PLASMA
+            ! CAUTION: this feature is experimental
+            ! give the particle extra drift momentum so that analytic current is matched by physical current at the boundary
+            ! note: this only works properly if the partilce is non-relativistic, the plasma response is linear at the boundary,
+            ! and the current density on the boundary is matched well
+            IF (.NOT. species%immobile) THEN
+#ifndef PER_PARTICLE_CHARGE_MASS        
+              drift_local_analytic = analytic_pulse_drift(current%part_pos, &
+                   species%charge,species%mass)
+#else
+              drift_local_analytic = analytic_pulse_drift(current%part_pos, &
+                   current%charge,current%mass) 
+#endif
+            END IF
+#endif
+        
         IF (species%ic_df_type == c_ic_df_thermal) THEN
           DO i = 1, c_ndirs
             temp_local = temperature(i)
+#ifdef APT_PLASMA
+            drift_local = drift_local + drift_local_analytic(i)
+#else
             drift_local = drift(i)
+#endif            
             current%part_p(i) = momentum_from_temperature(species%mass, &
                 temp_local, drift_local)
           END DO
         ELSE IF (species%ic_df_type == c_ic_df_relativistic_thermal) THEN
+#ifdef APT_PLASMA
+          current%part_p = momentum_from_temperature_relativistic(&
+              species%mass, temperature, species%fractional_tail_cutoff, drift + drift_local_analytic)
+#else
           current%part_p = momentum_from_temperature_relativistic(&
               species%mass, temperature, species%fractional_tail_cutoff, drift)
+#endif          
         ELSE IF (species%ic_df_type == c_ic_df_arbitrary) THEN
           parameters%use_grid_position = .FALSE.
           parameters%pack_pos = current%part_pos
@@ -238,9 +273,13 @@ CONTAINS
               parameters, 2, ranges(2,:), errcode)
           CALL evaluate_with_parameters_to_array(species%dist_fn_range(3), &
               parameters, 2, ranges(3,:), errcode)
-
+#ifdef APT_PLASMA
+          CALL sample_from_deck_expression(current, &
+              species%dist_fn, parameters, ranges, species%mass, drift + drift_local_analytic)
+#else
           CALL sample_from_deck_expression(current, &
               species%dist_fn, parameters, ranges, species%mass, drift)
+#endif          
         END IF
 
         current%weight = density * wdata

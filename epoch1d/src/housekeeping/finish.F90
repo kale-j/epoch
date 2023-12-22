@@ -27,7 +27,7 @@ MODULE finish
   USE ionise
   USE injectors
   USE probes
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   USE analytic_pulse
 #endif
 
@@ -57,8 +57,11 @@ CONTAINS
 
     DEALLOCATE(x, xb, x_global, xb_global, xb_offset_global)
     DEALLOCATE(ex, ey, ez, bx, by, bz, jx, jy, jz)
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     DEALLOCATE(ex_total, ey_total, ez_total, bx_total, by_total, bz_total)
+#ifdef APT_PLASMA
+    DEALLOCATE(jx_diff, jy_diff, jz_diff)
+#endif    
 #endif
 
     DEALLOCATE(npart_each_rank)
@@ -135,7 +138,7 @@ CONTAINS
     CALL deallocate_partlists
     CALL deallocate_eval_stack
     CALL deallocate_injectors
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     CALL deallocate_analytic_pulses
 #endif
 

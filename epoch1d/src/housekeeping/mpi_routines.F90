@@ -247,7 +247,7 @@ CONTAINS
     ALLOCATE(bx(1-ng:nx+ng))
     ALLOCATE(by(1-ng:nx+ng))
     ALLOCATE(bz(1-ng:nx+ng))
-#ifdef APT_VACUUM
+#if defined (APT_VACUUM) || defined(APT_PLASMA)
     ALLOCATE(ex_total(1-ng:nx+ng))
     ALLOCATE(ey_total(1-ng:nx+ng))
     ALLOCATE(ez_total(1-ng:nx+ng))
@@ -259,6 +259,11 @@ CONTAINS
     ALLOCATE(jx(1-jng:nx+jng))
     ALLOCATE(jy(1-jng:nx+jng))
     ALLOCATE(jz(1-jng:nx+jng))
+#ifdef APT_PLASMA
+    ALLOCATE(jx_diff(1-jng:nx+jng))
+    ALLOCATE(jy_diff(1-jng:nx+jng))
+    ALLOCATE(jz_diff(1-jng:nx+jng))
+#endif    
 
     ! Setup the particle lists
     IF (n_species > 0) &

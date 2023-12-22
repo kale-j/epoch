@@ -638,7 +638,7 @@ CONTAINS
     ELSE IF (str_cmp(element, 'jz')) THEN
       elementselected = c_dump_jz
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     ELSE IF (str_cmp(element, 'ex_total')) THEN
       elementselected = c_dump_ex_total
 
@@ -656,6 +656,16 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'bz_total')) THEN
       elementselected = c_dump_bz_total
+#ifdef APT_PLASMA
+    ELSE IF (str_cmp(element, 'jx_diff')) THEN
+      elementselected = c_dump_jx_diff
+
+    ELSE IF (str_cmp(element, 'jy_diff')) THEN
+      elementselected = c_dump_jy_diff
+
+    ELSE IF (str_cmp(element, 'jz_diff')) THEN
+      elementselected = c_dump_jz_diff
+#endif
 #endif
 
     ELSE IF (str_cmp(element, 'ekbar') &
@@ -898,13 +908,18 @@ CONTAINS
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
         IF (mask_element == c_dump_poynt_flux) bad = .FALSE.
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
         IF (mask_element == c_dump_ex_total) bad = .FALSE.
         IF (mask_element == c_dump_ey_total) bad = .FALSE.
         IF (mask_element == c_dump_ez_total) bad = .FALSE.
         IF (mask_element == c_dump_bx_total) bad = .FALSE.
         IF (mask_element == c_dump_by_total) bad = .FALSE.
         IF (mask_element == c_dump_bz_total) bad = .FALSE.
+#ifdef APT_PLASMA
+        IF (mask_element == c_dump_jx_diff) bad = .FALSE.
+        IF (mask_element == c_dump_jy_diff) bad = .FALSE.
+        IF (mask_element == c_dump_jz_diff) bad = .FALSE.
+#endif
 #endif
 
         ! Unset 'no_sum' dumpmask for grid variables

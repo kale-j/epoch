@@ -297,6 +297,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_apt_vacuum = 2**28
   INTEGER(i8), PARAMETER :: c_def_apt_vacuum_gauss = 2**29
   INTEGER(i8), PARAMETER :: c_def_apt_vacuum_gauss_2d = 2**30
+  INTEGER(i8), PARAMETER :: c_def_apt_plasma = 2**31
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -642,7 +643,10 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_bx_total          = 77
   INTEGER, PARAMETER :: c_dump_by_total          = 78
   INTEGER, PARAMETER :: c_dump_bz_total          = 79
-  INTEGER, PARAMETER :: num_vars_to_dump         = 79
+  INTEGER, PARAMETER :: c_dump_jx_diff           = 80
+  INTEGER, PARAMETER :: c_dump_jy_diff           = 81
+  INTEGER, PARAMETER :: c_dump_jz_diff           = 82
+  INTEGER, PARAMETER :: num_vars_to_dump         = 82
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2

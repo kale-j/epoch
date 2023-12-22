@@ -301,6 +301,19 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bz(laserpos-1) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ey_x_min + c * bz_x_min) &
+        - 2.0_num * ey(laserpos) &
+        + dt_eps * jy_diff(laserpos) &
+        + diff * bz(laserpos))
+
+    by(laserpos-1) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ez_x_min - c * by_x_min) &
+        + 2.0_num * ez(laserpos) &
+        - dt_eps * jz_diff(laserpos) &
+        + diff * by(laserpos))
+#else
     bz(laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ey_x_min + c * bz_x_min) &
         - 2.0_num * ey(laserpos) &
@@ -312,7 +325,8 @@ CONTAINS
         + 2.0_num * ez(laserpos) &
         - dt_eps * jz(laserpos) &
         + diff * by(laserpos))
-
+#endif
+    
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_min, lasers=lasers)
@@ -369,6 +383,19 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bz(laserpos) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ey_x_max - c * bz_x_max) &
+        + 2.0_num * ey(laserpos) &
+        - dt_eps * jy_diff(laserpos) &
+        + diff * bz(laserpos-1))
+
+    by(laserpos) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ez_x_max + c * by_x_max) &
+        - 2.0_num * ez(laserpos) &
+        + dt_eps * jz_diff(laserpos) &
+        + diff * by(laserpos-1))
+#else
     bz(laserpos) = sum * (-4.0_num * source1 &
         - 2.0_num * (ey_x_max - c * bz_x_max) &
         + 2.0_num * ey(laserpos) &
@@ -380,7 +407,8 @@ CONTAINS
         - 2.0_num * ez(laserpos) &
         + dt_eps * jz(laserpos) &
         + diff * by(laserpos-1))
-
+#endif
+    
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
         CALL calc_absorption(c_bd_x_max, lasers=lasers)

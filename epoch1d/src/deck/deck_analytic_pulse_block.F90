@@ -27,7 +27,7 @@ MODULE deck_analytic_pulse_block
   PUBLIC :: analytic_pulse_block_start, analytic_pulse_block_end
   PUBLIC :: analytic_pulse_block_handle_element, analytic_pulse_block_check
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   TYPE(analytic_pulse_block), POINTER :: working_analytic_pulse
   LOGICAL :: boundary_set = .FALSE.
   INTEGER :: boundary
@@ -37,7 +37,7 @@ CONTAINS
 
   SUBROUTINE analytic_pulse_deck_initialise
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     n_analytic_pulses(:) = 0
 #endif
 
@@ -47,7 +47,7 @@ CONTAINS
 
   SUBROUTINE analytic_pulse_deck_finalise
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     INTEGER :: io, iu
     ! check that user has only requested x_min boundary
     IF (SUM(n_analytic_pulses)-n_analytic_pulses(1) > 0) THEN
@@ -66,7 +66,7 @@ CONTAINS
 
   SUBROUTINE analytic_pulse_block_start
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     IF (deck_state == c_ds_first) RETURN
     ! if any analytic pulse is defined
     use_analytic_pulses = .TRUE.
@@ -79,7 +79,7 @@ CONTAINS
 
   SUBROUTINE analytic_pulse_block_end
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     IF (deck_state == c_ds_first) RETURN
 
     CALL attach_analytic_pulse(working_analytic_pulse)
@@ -94,13 +94,13 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     REAL(num) :: dummy
     INTEGER :: io, iu
 #endif
 
     errcode = c_err_none
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     IF (deck_state == c_ds_first) RETURN
     IF (element == blank .OR. value == blank) RETURN
 
@@ -204,6 +204,13 @@ CONTAINS
 #endif
 #endif
 
+#ifdef APT_PLASMA
+    IF (str_cmp(element, 'wp2norm')) THEN
+      working_analytic_pulse%wp2norm = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+#endif
+
     errcode = c_err_unknown_element
 #endif
 
@@ -214,14 +221,14 @@ CONTAINS
   FUNCTION analytic_pulse_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     TYPE(analytic_pulse_block), POINTER :: current
     INTEGER :: error, io, iu
 #endif
 
     errcode = c_err_none
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     error = 0
     current => analytic_pulses
     DO WHILE(ASSOCIATED(current))
@@ -230,6 +237,9 @@ CONTAINS
       IF (current%tau < 0.0_num) error = IOR(error, 4)
 #if defined(APT_VACUUM_GAUSS) || defined(APT_VACUUM_GAUSS_2D)
       IF (current%w0 < 0.0_num) error = IOR(error, 8)
+#endif
+#ifdef APT_PLASMA
+      IF (current%wp2norm <= 0.0_num) error = IOR(error, 16)
 #endif
       current => current%next
     END DO
@@ -274,6 +284,19 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define a "w0" for every analytic pulse.'
+        END DO
+      END IF
+      errcode = c_err_missing_elements
+    END IF
+#endif
+
+#ifdef APT_PLASMA
+    IF (IAND(error, 16) /= 0) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Must define "wp2norm" > 0 for every analytic pulse.'
         END DO
       END IF
       errcode = c_err_missing_elements

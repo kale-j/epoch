@@ -20,7 +20,7 @@ MODULE balance
   USE redblack_module
   USE timer
   USE utilities
-
+  
   IMPLICIT NONE
 
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
@@ -409,6 +409,14 @@ CONTAINS
       ALLOCATE(jy(1-jng:nx_new+jng))
       ALLOCATE(jz(1-jng:nx_new+jng))
     END IF
+#ifdef APT_PLASMA
+    ! j_diff is calculated during the field update
+    ! (just before it is needed), so only resize
+    DEALLOCATE(jx_diff, jy_diff, jz_diff)
+    ALLOCATE(jx_diff(1-jng:nx_new+jng))
+    ALLOCATE(jy_diff(1-jng:nx_new+jng))
+    ALLOCATE(jz_diff(1-jng:nx_new+jng))
+#endif
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
@@ -440,7 +448,7 @@ CONTAINS
     ALLOCATE(bz(1-ng:nx_new+ng))
     bz = temp
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     DEALLOCATE(ex_total, ey_total, ez_total, bx_total, by_total, bz_total)
     ALLOCATE(ex_total(1-ng:nx_new+ng))
     ALLOCATE(ey_total(1-ng:nx_new+ng))

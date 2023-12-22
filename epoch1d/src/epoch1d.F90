@@ -57,7 +57,7 @@ PROGRAM pic
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   USE analytic_pulse
 #endif
 
@@ -176,7 +176,7 @@ PROGRAM pic
   IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
 #endif
   CALL setup_background_collisions
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   ! analytic pulses can only be set up after dt is set
   IF (use_analytic_pulses) CALL setup_analytic_pulses
 #endif

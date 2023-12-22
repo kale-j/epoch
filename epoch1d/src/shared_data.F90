@@ -769,7 +769,7 @@ MODULE shared_data
   INTEGER, DIMENSION(2*c_ndims) :: n_lasers
   LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   !----------------------------------------------------------------------------
   ! analytic pulse technique, vacuum implementation
   !----------------------------------------------------------------------------
@@ -798,6 +798,11 @@ MODULE shared_data
     ! calculated quantities
     REAL(num) :: e1, rayl
 #endif
+#ifdef APT_PLASMA
+    ! mandatory, sum(wp^2/omega^2) over species
+    ! ultimately gets reset to amplitude of the analytic current
+    REAL(num) :: wp2norm
+#endif
     TYPE(analytic_pulse_block), POINTER :: next
   END TYPE analytic_pulse_block
 
@@ -808,6 +813,10 @@ MODULE shared_data
   ! total field
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ex_total, ey_total, ez_total
   REAL(num), ALLOCATABLE, DIMENSION(:) :: bx_total, by_total, bz_total
+#ifdef APT_PLASMA
+  ! analytic current term (J_particles - J_analytic)
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: jx_diff, jy_diff, jz_diff
+#endif  
 #endif
 
   TYPE(jobid_type) :: jobid
