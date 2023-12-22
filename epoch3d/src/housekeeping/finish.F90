@@ -27,7 +27,7 @@ MODULE finish
   USE ionise
   USE injectors
   USE probes
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
   USE analytic_pulse
 #endif  
 

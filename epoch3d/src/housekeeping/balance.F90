@@ -544,6 +544,14 @@ CONTAINS
       ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
       ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
     END IF
+#ifdef APT_PLASMA
+    ! j_diff is calculated during the field update
+    ! (just before it is needed), so only resize
+    DEALLOCATE(jx_diff, jy_diff, jz_diff)
+    ALLOCATE(jx_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+    ALLOCATE(jy_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+    ALLOCATE(jz_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
+#endif
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
@@ -583,12 +591,6 @@ CONTAINS
     ALLOCATE(bx_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
     ALLOCATE(by_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
     ALLOCATE(bz_total(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
-#ifdef APT_PLASMA
-    DEALLOCATE(jx_diff, jy_diff, jz_diff)
-    ALLOCATE(jx_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-    ALLOCATE(jy_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-    ALLOCATE(jz_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-#endif
 #endif    
     
     IF (pre_loading) THEN

@@ -1,4 +1,4 @@
-! Copyright (C) 2009-2019 University of Warwick
+! Copyright (C) 2023 Kale Weichman
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ CONTAINS
     analytic_pulse%zf = 0.0_num
 #endif
 #endif
-#ifdef APT_PLAMSA
+#ifdef APT_PLASMA
     analytic_pulse%wp2norm = -1.0_num
 #endif
     
