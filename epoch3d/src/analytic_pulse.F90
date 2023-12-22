@@ -336,7 +336,7 @@ CONTAINS
           END DO
 #else
           DO i = 1-ng,nx+ng
-#ifdef APT_VACCUM             
+#ifdef APT_VACUUM             
             bz_total(i,:,:) = bz_total(i,:,:) + b0_amp * &
                  EXP( -(tenv_norm-itau_ivg*x(i))**sg )*SIN( pht-omega_ivph*x(i) )
 #else

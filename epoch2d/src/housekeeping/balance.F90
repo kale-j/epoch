@@ -500,6 +500,12 @@ CONTAINS
       ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng))
       ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng))
     END IF
+#ifdef APT_PLASMA
+    DEALLOCATE(jx_diff, jy_diff, jz_diff)
+    ALLOCATE(jx_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng))
+    ALLOCATE(jy_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng))
+    ALLOCATE(jz_diff(1-jng:nx_new+jng, 1-jng:ny_new+jng))
+#endif
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
@@ -531,7 +537,7 @@ CONTAINS
     ALLOCATE(bz(1-ng:nx_new+ng, 1-ng:ny_new+ng))
     bz = temp
 
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     DEALLOCATE(ex_total, ey_total, ez_total, bx_total, by_total, bz_total)
     ALLOCATE(ex_total(1-ng:nx_new+ng, 1-ng:ny_new+ng))
     ALLOCATE(ey_total(1-ng:nx_new+ng, 1-ng:ny_new+ng))

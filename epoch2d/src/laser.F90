@@ -356,6 +356,20 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bz(laserpos-1, 0:ny) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ey_x_min(0:ny) + c * bz_x_min(0:ny)) &
+        - 2.0_num * ey(laserpos, 0:ny) &
+        + dt_eps * jy_diff(laserpos, 0:ny) &
+        + diff * bz(laserpos, 0:ny))
+
+    by(laserpos-1, 0:ny) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ez_x_min(0:ny) - c * by_x_min(0:ny)) &
+        + 2.0_num * ez(laserpos, 0:ny) &
+        - ly * (bx(laserpos, 0:ny) - bx(laserpos, -1:ny-1)) &
+        - dt_eps * jz_diff(laserpos, 0:ny) &
+        + diff * by(laserpos, 0:ny))
+#else
     bz(laserpos-1, 0:ny) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ey_x_min(0:ny) + c * bz_x_min(0:ny)) &
         - 2.0_num * ey(laserpos, 0:ny) &
@@ -368,7 +382,8 @@ CONTAINS
         - ly * (bx(laserpos, 0:ny) - bx(laserpos, -1:ny-1)) &
         - dt_eps * jz(laserpos, 0:ny) &
         + diff * by(laserpos, 0:ny))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -432,6 +447,20 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bz(laserpos, 0:ny) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ey_x_max(0:ny) - c * bz_x_max(0:ny)) &
+        + 2.0_num * ey(laserpos, 0:ny) &
+        - dt_eps * jy_diff(laserpos, 0:ny) &
+        + diff * bz(laserpos-1, 0:ny))
+
+    by(laserpos, 0:ny) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ez_x_max(0:ny) + c * by_x_max(0:ny)) &
+        - 2.0_num * ez(laserpos, 0:ny) &
+        + ly * (bx(laserpos, 0:ny) - bx(laserpos, -1:ny-1)) &
+        + dt_eps * jz_diff(laserpos, 0:ny) &
+        + diff * by(laserpos-1, 0:ny))
+#else
     bz(laserpos, 0:ny) = sum * (-4.0_num * source1 &
         - 2.0_num * (ey_x_max(0:ny) - c * bz_x_max(0:ny)) &
         + 2.0_num * ey(laserpos, 0:ny) &
@@ -444,7 +473,8 @@ CONTAINS
         + ly * (bx(laserpos, 0:ny) - bx(laserpos, -1:ny-1)) &
         + dt_eps * jz(laserpos, 0:ny) &
         + diff * by(laserpos-1, 0:ny))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -508,6 +538,20 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bx(0:nx, laserpos-1) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ez_y_min(0:nx) + c * bx_y_min(0:nx)) &
+        - 2.0_num * ez(0:nx, laserpos) &
+        - lx * (by(0:nx, laserpos) - by(-1:nx-1, laserpos)) &
+        + dt_eps * jz_diff(0:nx, laserpos) &
+        + diff * bx(0:nx, laserpos))
+
+    bz(0:nx, laserpos-1) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ex_y_min(0:nx) - c * bz_y_min(0:nx)) &
+        + 2.0_num * ex(0:nx, laserpos) &
+        - dt_eps * jx_diff(0:nx, laserpos) &
+        + diff * bz(0:nx, laserpos))
+#else
     bx(0:nx, laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ez_y_min(0:nx) + c * bx_y_min(0:nx)) &
         - 2.0_num * ez(0:nx, laserpos) &
@@ -520,7 +564,8 @@ CONTAINS
         + 2.0_num * ex(0:nx, laserpos) &
         - dt_eps * jx(0:nx, laserpos) &
         + diff * bz(0:nx, laserpos))
-
+#endif    
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN
@@ -584,6 +629,20 @@ CONTAINS
       END DO
     END IF
 
+#ifdef APT_PLASMA    
+    bx(0:nx, laserpos) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ez_y_max(0:nx) - c * bx_y_max(0:nx)) &
+        + 2.0_num * ez(0:nx, laserpos) &
+        + lx * (by(0:nx, laserpos) - by(-1:nx-1, laserpos)) &
+        - dt_eps * jz_diff(0:nx, laserpos) &
+        + diff * bx(0:nx, laserpos-1))
+
+    bz(0:nx, laserpos) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ex_y_max(0:nx) + c * bz_y_max(0:nx)) &
+        - 2.0_num * ex(0:nx, laserpos) &
+        + dt_eps * jx_diff(0:nx, laserpos) &
+        + diff * bz(0:nx, laserpos-1))
+#else
     bx(0:nx, laserpos) = sum * (-4.0_num * source1 &
         - 2.0_num * (ez_y_max(0:nx) - c * bx_y_max(0:nx)) &
         + 2.0_num * ez(0:nx, laserpos) &
@@ -596,7 +655,8 @@ CONTAINS
         - 2.0_num * ex(0:nx, laserpos) &
         + dt_eps * jx(0:nx, laserpos) &
         + diff * bz(0:nx, laserpos-1))
-
+#endif
+    
     DEALLOCATE(source1, source2)
 
     IF (dump_absorption) THEN

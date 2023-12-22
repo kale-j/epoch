@@ -567,7 +567,7 @@ CONTAINS
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 
     SELECT CASE(direction)
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
     CASE(c_dir_x)
       DO iy = 1, ny
       DO ix = 1, nx
@@ -1425,7 +1425,7 @@ CONTAINS
     field_energy = 0.0_num
     DO j = 1, ny
     DO i = 1, nx
-#ifdef APT_VACUUM
+#if defined(APT_VACUUM) || defined(APT_PLASMA)
        field_energy = field_energy + ex_total(i,j)**2 + ey_total(i,j)**2 &
           + ez_total(i,j)**2 + c2 * (bx_total(i,j)**2 + by_total(i,j)**2 + bz_total(i,j)**2)
 #else

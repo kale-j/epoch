@@ -30,6 +30,9 @@ MODULE setup
   USE mpi_routines
   USE sdf
   USE boundary
+#ifdef APT_PLASMA
+  USE analytic_pulse
+#endif
 
   IMPLICIT NONE
 
@@ -563,6 +566,9 @@ CONTAINS
     jy = 0.0_num
     jz = 0.0_num
 
+#ifdef APT_PLASMA
+    CALL analytic_pulse_update_j
+#endif
     ! Set up random number seed
     seed = 7842432
     IF (use_random_seed) CALL SYSTEM_CLOCK(seed)

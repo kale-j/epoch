@@ -201,7 +201,7 @@ CONTAINS
             DO ix = 0, nx
               cx1 = cnx / cpml_kappa_ex(ix)
 
-#ifdef APT_PLASMA              
+#ifdef APT_PLASMA
               ex(ix, iy, iz) = ex(ix, iy, iz) &
                   + cy1 * (bz(ix  , iy  , iz  ) - bz(ix  , iy-1, iz  )) &
                   - cz1 * (by(ix  , iy  , iz  ) - by(ix  , iy  , iz-1)) &
