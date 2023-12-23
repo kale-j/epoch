@@ -1,0 +1,110 @@
+begin:constant
+# laser parameters
+  l_lambda = 1.0 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+  l_period = 2*pi/l_omega
+# amplitude (normalized)  
+  l_a0 = 1.0
+# super-gaussian duration
+  sg = 4
+# pulse duration for 1/e^2sg amplitude of E
+# first number is FWHM 
+  dT = 1000 * femto * 0.5*loge(2)^(-0.5/sg)
+# time to launch center of pulse
+  dT0 = dT * 2.0
+
+# density (immobile ions)
+# linear ramp with vacuum on either side
+  x_vac = 30.0 * micron
+  n_crit = critical(l_omega)
+  den_max = 0.01*n_crit
+  den_min = 0.01*den_max
+  nppc = 10
+  
+# cells/wavelength
+  dxi = 30
+
+# box size
+# boundary distance to center of box (symmetric)
+  x0 = 500.0 * micron + x_vac
+  xmax = x0
+  xmin = -x0
+
+# time
+  tend = 2*dT0 + (xmax-xmin)/c
+# diagnostics
+  tdump = 20 * femto
+  tave = l_period
+end:constant
+
+begin:control
+  nx = floor((xmax-xmin)/l_lambda*dxi)
+  x_min = xmin
+  x_max = xmax
+  t_end = tend
+  dlb_threshold=0.5
+  use_pre_balance = F
+  balance_first = F
+end:control
+
+begin:boundaries
+  bc_x_min = open
+  bc_x_max = open
+end:boundaries
+
+begin:analytic_pulse
+  boundary = x_min
+  a0 = l_a0
+  omega = l_omega
+  tau = dT
+  t0 = dT0
+  sg = sg
+end:analytic_pulse
+
+begin:species
+  name=Electron
+  charge=-1.0
+  mass=1.0
+  npart_per_cell = nppc
+  dump=T
+  temp = 0
+  density_min = den_min
+  density = if(x gt x_min+x_vac, den_max*(x-x_min-x_vac)/(2*x0-2*x_vac), 0.0)
+  density = if(x gt x_max-x_vac, 0.0, rho(Electron))
+end:species
+
+begin:species
+  name=Ion
+  charge=1.0
+  mass=1836.0
+  npart_per_cell = nppc
+  immobile=T
+  temp=0
+  density_min = den_min
+  density = rho(Electron)
+end:species
+
+begin:output
+  name = e_fields
+  file_prefix = e_fields
+  dt_snapshot = tdump
+  dump_first = T
+  dt_average = tave
+  grid=always
+  ex=always + single + snapshot + average
+  ey=always + single + snapshot + average
+  bx=always + single + snapshot + average  
+  bz=always + single + snapshot + average
+  ex_total=always + single + snapshot
+  ey_total=always + single + snapshot
+  bz_total=always + single + snapshot
+end:output
+
+begin:output
+  name = DF
+  file_prefix = DF
+  dt_snapshot = tdump
+  dump_first = T
+  absorption = always
+  total_energy_sum = always + species
+end:output

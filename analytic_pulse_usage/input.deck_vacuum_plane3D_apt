@@ -1,0 +1,131 @@
+begin:constant
+# laser parameters
+  l_lambda = 1.0 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+# amplitude (normalized)  
+  l_a0 = 0.1
+# super-gaussian duration
+  sg = 4
+# pulse duration for 1/e^2sg amplitude of E
+# first number is FWHM 
+  dT = 100 * femto * 0.5*loge(2)^(-0.5/sg)
+# time to launch center of pulse
+  dT0 = dT * 2.0
+
+# cells/wavelength
+  dxi = 30
+  dyi = dxi
+  dzi = dyi
+
+# box size
+# boundary distance to center of box (symmetric)
+  x0 = 32.0 * micron
+  xmax = x0
+  xmin = -x0
+  ymax = 4.0 * micron
+  ymin = -ymax
+  zmax = ymax
+  zmin = ymin
+
+# plasma (immobile ions)
+# slab with with vacuum on either side  
+  x_vac = 4 * micron
+  n_crit = critical(l_omega)
+  den_max = 1e-6*n_crit
+  den_min = 0.01*den_max
+  nppc = 4
+
+# time
+  tend = 2*dT0 + (xmax-xmin)/c
+# # diagnostics
+#   tdump = 100 * femto
+end:constant
+
+begin:control
+  nx = floor((xmax-xmin)/l_lambda*dxi)
+  ny = floor((ymax-ymin)/l_lambda*dyi)
+  nz = floor((zmax-zmin)/l_lambda*dzi)  
+  x_min = xmin
+  x_max = xmax
+  y_min = ymin
+  y_max = ymax
+  z_min = zmin
+  z_max = zmax
+  t_end = tend
+  dlb_threshold=0.5
+end:control
+
+begin:boundaries
+  bc_x_min = open
+  bc_x_max = open
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
+end:boundaries
+
+begin:analytic_pulse
+  boundary = x_min
+  a0 = l_a0
+  omega = l_omega
+  tau = dT
+  t0 = dT0
+  sg = 4
+end:analytic_pulse
+
+begin:species
+  name=Electron
+  charge=-1.0
+  mass=1.0
+  npart_per_cell = nppc
+  dump=T
+  temp = 0
+  density_min = den_min
+  density = if(x gt xmin+x_vac, den_max, 0.0)
+  density = if(x gt xmax-x_vac, 0.0, rho(Electron))
+end:species
+
+begin:species
+  name=Ion
+  charge=1.0
+  mass=1836.0
+  npart_per_cell = nppc
+  immobile=T
+  temp=0
+  density_min = den_min
+  density = rho(Electron)
+end:species
+
+# begin:output
+#   name = e_fields
+#   file_prefix = e_fields
+#   dt_snapshot = tdump
+#   dump_first = T
+#   grid=always
+#   ex=always + single + snapshot
+#   ey=always + single + snapshot
+#   bx=always + single + snapshot
+#   bz=always + single + snapshot
+#   ex_total=always + single + snapshot
+#   ey_total=always + single + snapshot
+#   bz_total=always + single + snapshot
+# end:output
+
+# begin:output
+#   name = dens
+#   file_prefix = dens
+#   dt_snapshot = tdump
+#   dump_first = T
+#   grid=always
+#   number_density=always + no_sum + species + single + snapshot
+# end:output
+
+# begin:output
+#   name = DF
+#   file_prefix = DF
+#   dt_snapshot = tdump
+#   dump_first = T
+#   absorption = always
+#   total_energy_sum = always + species
+#   # total_energy_sum = always  
+# end:output

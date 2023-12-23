@@ -1,0 +1,166 @@
+begin:constant
+# laser
+  l_lambda = 0.8 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+  l_a0 = 50.0
+  l_amp = l_a0 * me * c * l_omega/qe
+# gaussian
+  sg = 1
+# pulse duration for 1/e^2sg amplitude of E
+# first number is FWHM 
+  dT = 15 * femto * 0.5*loge(2)^(-0.5/sg)
+# to have initial a0 < 0.05
+  dTfac = 3.0
+# effective spot size (FWHM in E)
+  w0 = 0.60056 * 3.0 * micron
+# location of focus in x
+  x0 = 0.0 * micron
+# time to launch center of pulse
+  dT0 = dT * dTfac
+
+# electron beam properties
+# density peak
+  n_crit = critical(l_omega)
+  ne = 1e-4*n_crit
+  ne_min = ne*1e-3
+  nppc = 10
+# drift momentum  
+  px0 = 0.511 * 1e4 * me * c
+# same temporal profile as laser  
+  tend_e = 2 * dT0
+
+# cells/wavelength
+  dxi = 40
+  dyi = dxi
+
+# box size
+  xbox = 20 * micron
+# overlap peaks in center of box
+  xmin = -0.5*xbox
+  xmax = 0.5*xbox
+  ymax = 5.0 * micron
+# final simulation time
+  tend = 75 * femto
+
+# dump info
+  tdump = 10*femto
+
+# gaussian focusing
+  xf = x0 - xmin
+  rayl = pi * w0^2 / l_lambda
+  s0 = xf/rayl
+  s02 = xf*xf/(rayl*rayl)  
+  r02 = (y*y+z*z)/w0^2
+  
+# amplitude correction for boundary condition
+  ft = 0.95/sqrt(3)
+  af = 1 - (1+ft^2)*pi^2/(4*dxi^2)
+end:constant
+
+begin:control
+  nx = floor(dxi*(xmax-xmin)/l_lambda)
+  ny = floor(dyi*2*ymax/l_lambda)
+  nz = ny
+  x_min = xmin
+  x_max = xmax
+  y_min = -ymax
+  y_max = ymax
+  z_min = -ymax
+  z_max = ymax
+  # nsteps = 2
+  t_end = tend
+  dlb_threshold = 0.5
+end:control
+
+begin:laser
+  boundary = x_min
+  amp = l_amp*af
+  lambda = l_lambda
+  t_profile = exp(-(time-dT0)^(2*sg)/dT^(2*sg))
+  profile = exp(-r02/(1+s02))/sqrt(1+s02)
+  phase = r02*s0/(1+s02)-atan(s0)
+end:laser
+
+begin:boundaries
+  bc_x_min_field = simple_laser
+  bc_x_min_particle = open
+  bc_x_max = open
+  bc_y_min = open
+  bc_y_max = open
+  bc_z_min = open
+  bc_z_max = open
+end:boundaries
+
+begin:injector
+  boundary = x_max
+  species = Electron
+  npart_per_cell = nppc
+  density = ne*exp(-r02)*gauss(time,dT0,dT)
+  density_min = ne_min
+  temp_ev = 0
+  drift_px = -px0
+  t_end = tend_e
+end:injector
+
+begin:qed
+  use_qed = T
+  produce_photons = T
+  photon_energy_min = 2*511.0*kev
+  photon_dynamics = T
+  produce_pairs = F
+end:qed
+
+begin:species
+  name = Electron
+  charge = -1.0
+  mass = 1.0
+  npart = 0
+  dump = T
+  identify:electron
+end:species
+
+begin:species
+  name = Photon
+  charge = 0.0
+  mass = 0.0
+  npart = 0
+  dump = T
+  identify:photon
+end:species
+
+begin:output
+  name = dens
+  file_prefix = dens
+  dt_snapshot = tdump
+  grid = always
+  number_density = always + species + no_sum + single + snapshot
+end:output
+
+begin:output
+  name = e_fields
+  file_prefix = e_fields
+  dt_snapshot = tdump
+  grid = always
+  # ex = always + single + snapshot
+  ey = always + single + snapshot
+  # bz = always + single + snapshot
+end:output
+
+begin:output
+  name = DF
+  file_prefix = DF
+  dt_snapshot = tdump/2
+  absorption = always
+  total_energy_sum = always
+  distribution_functions = always
+end:output
+
+begin:dist_fn
+  name = en
+  ndims = 1
+  direction1 = dir_en
+  range1 = (1,1)
+  resolution1 = 2000
+  include_species:Electron
+  include_species:Photon
+end:dist_fn

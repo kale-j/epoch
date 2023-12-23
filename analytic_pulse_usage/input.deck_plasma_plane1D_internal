@@ -1,0 +1,136 @@
+begin:constant
+# laser parameters
+  l_lambda = 1.0 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+  l_period = 2*pi/l_omega
+# amplitude (normalized)  
+  l_a0 = 1e-4
+  l_amp = l_a0 * me * c * l_omega/qe
+# super-gaussian, g=4
+# pulse duration for 1/e^2g amplitude of E
+# first number is FWHM 
+  sg = 4
+  dT = 100 * femto /(2*loge(2)^(1/(2*sg)))
+# time to launch center of pulse
+  dT0 = dT * 2.0
+
+# density (electron-immobile ion plasma)
+# internal case is slab with with vacuum on left side, apt case has only slab
+# steps for dumps, used to align dumps exactly with internal simulation
+  ndump = 35
+# time step cfl multiplier  
+  ft = 0.95
+  tdump = ft * micron/c  
+  x_vac = 10 * tdump * c
+  n_crit = critical(l_omega)
+  den_fac = 1e-3
+  den_max = den_fac*n_crit
+  den_min = 0.01*den_max
+  nppc = 4000
+
+# cells/wavelength
+  dxi = 30
+
+# box size
+# boundary distance to center of box (symmetric)
+  x0 = 64.0 * micron + x_vac
+  xmax = x0 - x_vac
+  xmin = -x0
+
+# final simulation time
+  tend = 2*dT0 + (xmax-xmin)/c
+
+# amplitude correction for boundary condition
+  af = 1 - (1+ft^2)*pi^2/(4*dxi^2)
+end:constant
+
+begin:control
+  nx = ceil((xmax-xmin)/l_lambda*dxi)
+  x_min = xmin
+  x_max = xmax
+  t_end = tend
+  dlb_threshold=0.5
+  use_pre_balance = F
+  balance_first = F
+# without random seed, the domain may have exactly the same
+# initial particle placement
+  use_random_seed = F
+end:control
+
+begin:boundaries
+  bc_x_min_field = simple_laser
+  bc_x_min_particle = open
+  bc_x_max = open
+end:boundaries
+
+begin:laser
+  boundary = x_min
+  amp = l_amp*af
+  lambda = l_lambda
+  t_profile = exp(-(time-dT0)^(2*sg)/dT^(2*sg))
+end:laser
+
+begin:species
+  name=Electron
+  charge=-1.0
+  mass=1.0
+  npart_per_cell = nppc
+  dump=T
+  temp = 0
+  density_min = den_min
+  density = if(x gt x_min+x_vac, den_max, 0.0)
+end:species
+
+begin:species
+  name=Ion
+  charge=1.0
+  mass=1836.0
+  npart_per_cell = nppc
+  immobile=T
+  temp=0
+  density_min = den_min
+  density = rho(Electron)
+end:species
+
+begin:output
+  name = e_fields
+  file_prefix = e_fields
+  nstep_snapshot = ndump
+  dump_first = T
+  dump_last = F
+  grid=always
+  ex=always + single + snapshot
+  ey=always + single + snapshot
+  bz=always + single + snapshot
+end:output
+
+# begin:output
+#   name = dens
+#   file_prefix = dens
+#   nstep_snapshot = ndump
+#   dump_first = T
+#   dump_last = F
+#   grid=always
+#   number_density=always + no_sum + species + single + snapshot
+# end:output
+
+begin:output
+  name = jj2
+  file_prefix = jj2
+  nstep_snapshot = ndump
+  dump_first = T
+  dump_last = F
+  grid=always
+  jy=always + single + snapshot
+  jy_diff=always + single + snapshot
+end:output
+
+begin:output
+  name = DF
+  file_prefix = DF
+  nstep_snapshot = ndump
+  dump_first = T
+  dump_last = F
+  absorption = always
+  total_energy_sum = always + species
+end:output

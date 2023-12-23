@@ -1,0 +1,160 @@
+begin:constant
+# laser parameters
+  l_lambda = 1.0 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+  l_period = 2*pi/l_omega
+# amplitude (normalized)  
+  l_a0 = 1e-4
+# super-gaussian, g=4
+# pulse duration for 1/e^2g amplitude of E
+# first number is FWHM
+  sg = 4
+  dT = 100 * femto /(2*loge(2)^(1/(2*sg)))
+
+# density (electron-immobile ion plasma)
+# internal case is slab with with vacuum on left side, apt case has only slab
+# steps for dumps, used to align dumps exactly with internal simulation
+  ndump = 35
+# time step cfl multiplier  
+  ft = 0.95
+  tdump = ft * micron/c
+  x_vac = 10 * tdump * c
+  n_crit = critical(l_omega)
+  den_fac = 1e-2
+  den_max = den_fac*n_crit
+  den_min = 0.01*den_max
+  nppc = 40
+# normalized plasma frequency for analytic pulse
+  wp2n = den_fac
+  
+# cells/wavelength
+  dxi = 30
+
+# amplitude correction for density (to compare with internally-advanced pulse)
+# this is an approximate expression, and requires manual adjustment to achieve a percise match
+# the numerical parameter is senstivite to the initial particle position
+# (at moderate-high resolution), which depends on the mpi configuration
+# consequently, this may need to be fine tuned by the user
+# example with 48 mpi procs, den_fac = 1e-2,  nppc = 30/60/120: +1.8e-5/+7.5e-6/+4.35e-4
+  del2f = pi^2/(6*dxi^2)*den_fac*sqrt(1-den_fac)/(1+sqrt(1-den_fac))
+  den_a = 2 * (1-del2f+1.8e-5) / (1+sqrt(1-den_fac))
+
+# box size
+# boundary distance to center of box (symmetric)
+  x0 = 64.0 * micron + x_vac
+  xmax = x0 - x_vac
+  xmin = -x0 + x_vac
+
+# extra time delay and phase to match timing of internal case
+  rfac = pi*pi/(dxi*dxi)
+  vg0 = c*(1-0.5*(1-ft*ft)*rfac)
+  vp0 = c*(1-(1-ft*ft)*rfac/6)
+  dT0 = dT * 2.0 + x_vac/vg0
+# this is an approximate expression, and requires manual adjustment to achieve a percise match
+# the numerical parameter is senstivite to the initial particle position
+# (at moderate-high resolution), which depends on the mpi configuration
+# consequently, this may need to be fine tuned by the user
+# example with 48 mpi procs, den_fac = 1e-2,  nppc = 30/60/120: +1.30e-4/+3.4945e-4/+3.3266e-4
+  ph0 = -l_omega*x_vac*(1-0.25*den_fac)/vp0 + 1.30e-4
+
+# time
+  tend = 4.0*dT + (xmax-xmin+x_vac)/c
+end:constant
+
+begin:control
+  nx = ceil((xmax-xmin)/l_lambda*dxi)
+  x_min = xmin
+  x_max = xmax
+  t_end = tend
+  dlb_threshold=0.5
+  use_pre_balance = F
+  balance_first = F
+end:control
+
+begin:boundaries
+  bc_x_min_field = open
+  bc_x_max_field = open
+# thermal bcs prevent charge buildup on boundary
+  bc_x_min_particle = thermal
+  bc_x_max_particle = thermal
+end:boundaries
+
+begin:analytic_pulse
+  boundary = x_min
+  a0 = l_a0 * den_a
+  omega = l_omega
+  tau = dT
+  t0 = dT0
+  ph0 = ph0
+  sg = sg
+  wp2norm = wp2n
+end:analytic_pulse
+
+begin:species
+  name=Electron
+  charge=-1.0
+  mass=1.0
+  npart_per_cell = nppc
+  dump=T
+  temp = 0
+  density_min = den_min
+  density = if(abs(x-x0+x_vac) lt x_vac, den_max*(1-abs(x-x0+x_vac)/x_vac), 0)
+  density = if(abs(x+x0-x_vac) lt x_vac, den_max*(1-abs(x+x0-x_vac)/x_vac), rho(Electron))
+end:species
+
+begin:species
+  name=Ion
+  charge=1.0
+  mass=1836.0
+  npart_per_cell = nppc
+  immobile=T
+  temp=0
+  density_min = den_min
+  density = rho(Electron)
+end:species
+
+begin:output
+  name = e_fields
+  file_prefix = e_fields
+  nstep_snapshot = ndump
+  dump_first = T
+  dump_last = F
+  grid=always
+  # ex=always + single + snapshot
+  ey=always + single + snapshot
+  # bz=always + single + snapshot
+  # ex_total=always + single + snapshot
+  ey_total=always + single + snapshot
+  # bz_total=always + single + snapshot
+end:output
+
+# begin:output
+#   name = dens
+#   file_prefix = dens
+#   nstep_snapshot = ndump
+#   dump_first = T
+#   dump_last = F
+#   grid=always
+#   number_density=always + no_sum + species + single + snapshot
+# end:output
+
+# begin:output
+#   name = jj2
+#   file_prefix = jj2
+#   nstep_snapshot = ndump
+#   dump_first = T
+#   dump_last = F
+#   grid=always
+#   jy=always + single + snapshot
+#   jy_diff=always + single + snapshot
+# end:output
+
+begin:output
+  name = DF
+  file_prefix = DF
+  nstep_snapshot = ndump
+  dump_first = T
+  dump_last = F
+  absorption = always
+  total_energy_sum = always + species
+end:output

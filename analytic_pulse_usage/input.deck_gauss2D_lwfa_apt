@@ -1,0 +1,153 @@
+begin:constant
+# laser
+  l_lambda = 0.8 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+  Twave = 2*pi/l_omega
+  l_a0 = 3.0
+# gaussian
+  sg = 1
+# pulse duration for 1/e^2sg amplitude of E
+# first number is FWHM 
+  dT = 15 * femto * 0.5*loge(2)^(-0.5/sg)
+# effective spot size (FWHM in E)
+  w0 = 0.60056 * 8.0 * micron
+# time to launch center of pulse
+  dT0 = dT * 2.0
+
+# density in terms of electrons (immobile ions)
+  n_crit = critical(l_omega)
+  den_max = 0.01*n_crit
+  den_min = 0.01*den_max
+  nppc = 20
+  
+# cells/wavelength
+  dxi = 40
+  dyi = dxi
+  
+# box size
+  x_vac = 5 * micron
+  x_ramp = 15 * micron
+  x_const = 5 * micron
+  ymax = 15*micron
+  xmax = x_const
+  xmin = -x_vac - x_ramp
+
+# time
+# time to move box (front of pulse reaches edge)
+  tmove = (xmax-xmin)/c
+# let peak propagate 100 um
+  tend = dT0 + (x_vac + x_ramp + 100*micron)/c
+# diagnostics
+  tdump = 20 * femto
+  tave = Twave
+end:constant
+
+begin:control
+  nx = floor(dxi*(xmax-xmin)/l_lambda)
+  ny = floor(dyi*2*ymax/l_lambda)
+  x_min = xmin
+  x_max = xmax
+  y_min = -ymax
+  y_max = ymax  
+  t_end = tend
+  dlb_threshold=0.5
+end:control
+
+begin:window
+  move_window = T
+  window_v_x = c
+  window_start_time = tmove
+  bc_x_min_after_move = simple_outflow
+  bc_x_max_after_move = simple_outflow
+  bc_y_min_after_move = simple_outflow
+  bc_y_max_after_move = simple_outflow
+end:window
+
+begin:analytic_pulse
+  boundary = x_min
+  a0 = l_a0
+  w0 = w0
+  omega = l_omega
+  tau = dT
+  t0 = dT0
+end:analytic_pulse
+
+begin:boundaries
+  bc_x_min = open
+  bc_x_max = open
+  bc_y_min = open
+  bc_y_max = open
+end:boundaries
+
+begin:species
+  name = Electron
+  charge = -1.0
+  mass = 1.0
+  temp_ev = 0.0
+  density_min = den_min
+  npart_per_cell = nppc
+  density = den_max
+  density = if(x lt 0.0*micron, den_max*(x_ramp+x)/x_ramp, rho(Electron))
+  density = if(x lt x_min+x_vac, 0.0, rho(Electron))  
+  dump = T
+end:species
+
+begin:species
+  name = Ion
+  charge = 1.0
+  mass = 1836.0
+  temp_ev = 0.0
+  density_min = den_min
+  npart_per_cell = nppc
+  density = rho(Electron)
+  immobile = T
+  dump = F
+end:species
+
+begin:output
+  name = e_fields
+  file_prefix = e_fields
+  dt_snapshot = tdump
+  dump_first = T
+  dt_average = tave
+  grid=always
+  ex=always + single + snapshot + average
+  ey=always + single + snapshot + average
+  # bx=always + single + snapshot + average  
+  # bz=always + single + snapshot + average
+  ex_total=always + single + snapshot
+  ey_total=always + single + snapshot
+  # bx_total=always + single + snapshot
+  # bz_total=always + single + snapshot
+end:output
+
+begin:output
+  name = dens
+  file_prefix = dens
+  dt_snapshot = tdump
+  dump_first = T
+  dt_average = tave
+  grid=always
+  number_density=always + no_sum + species + single + snapshot + average
+end:output
+
+begin:output
+  name = DF
+  file_prefix = DF
+  dt_snapshot = tdump/2
+  dump_first = T
+  dt_average = tave
+  distribution_functions=always
+  absorption = always
+  total_energy_sum = always + species
+end:output
+
+begin:dist_fn
+  name=en
+  ndims=1
+  dumpmask=always
+  direction1=dir_en
+  range1=(0,0)
+  resolution1=2500
+  include_species:Electron
+end:dist_fn

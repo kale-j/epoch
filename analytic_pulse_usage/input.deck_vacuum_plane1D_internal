@@ -1,0 +1,105 @@
+begin:constant
+# laser parameters
+  l_lambda = 1.0 * micron
+  l_omega = 2.0 * pi * c / l_lambda
+# amplitude (normalized)  
+  l_a0 = 1e-4
+  l_amp = l_a0 * me * c * l_omega/qe
+# super-gaussian duration
+  sg = 4
+# pulse duration for 1/e^2sg amplitude of E
+# first number is FWHM 
+  dT = 100 * femto * 0.5*loge(2)^(-0.5/sg)
+# time to launch center of pulse
+  dT0 = dT * 2.0
+
+# cells/wavelength
+  dxi = 30
+  
+# box size
+# boundary distance to center of box (symmetric)
+  x0 = 64.0 * micron
+  xmax = x0
+  xmin = -x0
+
+# plasma (immobile ions)
+# uniform density from x = 0 to x_slab
+  x_slab = 32.0*micron
+  n_crit = critical(l_omega)
+  den_max = 10*n_crit
+  den_min = 0.01*den_max
+  nppc = 100
+
+# time
+  tend = 2*dT0 + (xmax-xmin)/c
+# diagnostics
+  tdump = 3 * femto
+
+# amplitude correction for boundary condition
+  ft = 0.95
+  af = 1 - 0.25*pi*pi*(1+ft*ft)/(dxi*dxi)
+end:constant
+
+begin:control
+  nx = floor((xmax-xmin)/l_lambda*dxi)
+  x_min = xmin
+  x_max = xmax
+  t_end = tend
+  dlb_threshold=0.5
+  use_pre_balance = F
+  balance_first = F
+end:control
+
+begin:boundaries
+  bc_x_min_field = simple_laser
+  bc_x_min_particle = open
+  bc_x_max = open
+end:boundaries
+
+begin:laser
+  boundary = x_min
+  amp = l_amp*af
+  lambda = l_lambda
+  t_profile = exp(-(time-dT0)^(2*sg)/dT^(2*sg))
+end:laser
+
+begin:species
+  name=Electron
+  charge=-1.0
+  mass=1.0
+  npart_per_cell = nppc
+  dump=T
+  temp = 0
+  density_min = den_min
+  density = if(x gt 0.0, den_max, 0.0)
+  density = if(x gt x_slab, 0.0, rho(Electron))  
+end:species
+
+begin:species
+  name=Ion
+  charge=1.0
+  mass=1836.0
+  npart_per_cell = nppc
+  immobile=T
+  temp=0
+  density_min = den_min
+  density = rho(Electron)
+end:species
+
+begin:output
+  name = e_fields
+  file_prefix = e_fields
+  dt_snapshot = tdump
+  grid=always
+  ey=always + single + snapshot
+  # bz=always + single + snapshot
+end:output
+
+begin:output
+  name = DF
+  file_prefix = DF
+  dt_snapshot = tdump
+  dump_first = T
+  absorption = always
+  total_energy_sum = always  
+end:output
