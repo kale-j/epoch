@@ -1,18 +1,18 @@
 # EPOCH with implementation of the analytic pulse technique (APT)
 
-This branch of EPOCH contains a separation of Maxwell's equations into analytic and computational parts, henceforth referred to as the analytic pulse technique (APT). Details of APT and examples of its applications are given in Ref 1: https://arxiv.org/abs/2307.04843
+This branch of EPOCH contains a separation of Maxwell's equations into analytic and computational parts, henceforth referred to as the analytic pulse technique (APT). Details of APT and examples of its applications are given in this reference: https://arxiv.org/abs/2307.04843
 
-The following documentation is intended to serve as a supplement to Ref 1. It is not intended to be sufficient on its own to understand what this code does.
+The following documentation is intended to serve as a supplement to the reference. It is not intended to be sufficient on its own to understand what this code does.
 
 ## About APT
 
-The linearity of Maxwell's equations in the current and field terms allows the fields and current to be decomposed into multiple parts. One can use this linearity to treat part of the field/current analytically and part using standard computational electromagnetics approaches (e.g., FDTD). The combination of analytic and computational solutions can be used to extend the capabilities of existing methods for simulating electromagnetics. This can be highly beneficial. In the PIC context, it can allow the user to study new configurations, can be used to bypass certain numerical issues, and can sometimes significantly reduce simulation cost. Several examples of this in practice are given in Ref 1.
+The linearity of Maxwell's equations in the current and field terms allows the fields and current to be decomposed into multiple parts. One can use this linearity to treat part of the field/current analytically and part using standard computational electromagnetics approaches (e.g., FDTD). The combination of analytic and computational solutions can be used to extend the capabilities of existing methods for simulating electromagnetics. This can be highly beneficial. In the PIC context, it can allow the user to study new configurations, can be used to bypass certain numerical issues, and can sometimes significantly reduce simulation cost. Several examples of this in practice are given in the reference.
 
 In EPOCH it is convenient to consider either solutions in which only the fields have an analytic part or solutions in which both the fields and the current have an analytic part. These are referred to as APT_VACUUM (and its variants, see precompiler flag section) and APT_PLASMA, respectively.
 
 ## Examples
 
-Examples of how to use this code for both benchmarking and physics problems are provided in the `analytic_pulse_usage` directory. This directory also contains information on how to reproduce the results included in Ref 1.
+Examples of how to use this code for both benchmarking and physics problems are provided in the `analytic_pulse_usage` directory. This directory also contains information on how to reproduce the results included in the reference.
 
 ## Implementation notes
 
@@ -26,32 +26,30 @@ A few different configurations for the analytic pulse/current are available, usi
 
 ```
 APT_VACUUM
-```
 
 Plane wave implementation of APT without analytic current
+```
 
 ```
 APT_VACUUM_GAUSS
 
-```
-
 Spatially Gaussian/temporally super-Gaussian pulse without analytic current. Includes support for moving focal location (flying focus)
+```
 
 
 ```
 APT_VACUUM_GAUSS_2D
 
-```
-
 Spatially Gaussian/temporally super-Gaussian pulse without analytic current. This version uses 2D focusing (in y). Includes support for moving focal location (flying focus)
+```
 
 
 ```
 APT_PLASMA
 
+Plane wave implementation of APT with analytic current. At the moment, this only works in 1D (see known issues).
 ```
 
-Plane wave implementation of APT with analytic current. At the moment, this only works in 1D (see known issues).
 
 ### Outputs
 
@@ -61,7 +59,7 @@ NOTE: with APT, the "ordinary" fields (e.g., ex) represents the fields advanced 
 
 ## General disclaimer and known issues
 
-This code serves as an example for how APT can be implemented in a PIC code. An attempt has been made to ensure the code will work under several common use cases (for example, those in Ref 1), however, it has not been tested in all possible configurations.
+This code serves as an example for how APT can be implemented in a PIC code. An attempt has been made to ensure the code will work under several common use cases (for example, those in the reference), however, it has not been tested in all possible configurations.
 
 You may encounter numerical instabilities or other incorrect behavior if the conditions under which this implementation is valid are violated. Users are advised to perform thorough testing before using this code for research.
 
